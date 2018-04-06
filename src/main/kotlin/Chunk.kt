@@ -16,7 +16,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL20.*
 
 class Chunk(private val globalX: Float, private val globalZ: Float) {
-	companion object Chunk {
+	companion object {
 		// The size of one chunk in Perlin coordinates.
 		const val xSize = 0.75f
 		const val zSize = 0.75f
@@ -27,10 +27,6 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 
 		// Convert from x,y,z to cubeMap index.
 		private fun coord(x: Int, y: Int, z: Int) = z*16*16 + y*16 + x
-
-		private const val grass: Int = 1
-		private const val dirt: Int = 2
-		private const val snow: Int = 3
 	}
 
 	fun setup() {
@@ -42,8 +38,8 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 	val buffers by lazy { genBuffers(displayList) }
 
 	// Generates the cube map.
-	private fun genLand(): Array<Int> {
-		val cubeMap = Array(16*16*16) { 0 }
+	private fun genLand(): Array<Block> {
+		val cubeMap = Array(16*16*16) { Block(Block.air) }
 
 		val xMin = globalX * Chunk.xSize
 		val zMin = globalZ * Chunk.zSize
@@ -59,75 +55,31 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				val height = Math.floor(15f * perlin.getValue(perlinX.toDouble(), 0.0, perlinZ.toDouble())).toInt()
 				val heightMinMaxed = Math.max(Math.min(height, 15), 1)
 				for (y in 0 until heightMinMaxed)
-					cubeMap[coord(x, y, z)] = dirt
-				cubeMap[coord(x, heightMinMaxed, z)] = if (heightMinMaxed < 12) grass else snow
+					cubeMap[coord(x, y, z)] = Block(Block.dirt)
+				cubeMap[coord(x, heightMinMaxed, z)] = if (heightMinMaxed < 12) Block(Block.grass) else Block(Block.snow)
 			}
 		}
 
 		return cubeMap
 	}
 
-	// I really wish I understood Kotlin enough to combine these into a working generic, but I
-	// guess for now this will have to do.
-	class FastFloatBuffer(private val initialSize: Int) {
-		private val array: FloatArray = FloatArray(initialSize)
-		private var idx: Int = 0
-
-		fun addAll(vararg vs: Float) {
-			for (v in vs)
-				array[idx++] = v
-		}
-
-		val length get() = idx
-
-		fun result(): FloatArray {
-			return array.copyOfRange(0, length)
-		}
-	}
-
-	class FastShortBuffer(private val initialSize: Int) {
-		private val array: ShortArray = ShortArray(initialSize)
-		private var idx: Int = 0
-
-		fun addAll(vararg vs: Int) {
-			for (v in vs)
-				array[idx++] = v.toShort()
-		}
-
-		val length get() = idx
-
-		fun result(): ShortArray {
-			return array.copyOfRange(0, length)
-		}
-	}
-
 	// Represents one voxel derived from the cube map.
-	class Voxel(val x: Int, val y: Int, val z: Int, private val blockType: Int,
+	class Voxel(val x: Int, val y: Int, val z: Int, private val blockType: Block,
 				private val top: Boolean = true, private val left: Boolean = true,
 				private val right: Boolean = true, private val bottom: Boolean = true,
 				private val front: Boolean = true, private val back: Boolean = true) {
 
 		companion object {
 			// Voxel size
-			private const val size = 0.51f
+			private const val size = 0.52f
 		}
 
 		val isEmpty get() = !top && !left && !right && !bottom && !front && !back
 
-		// Each vertex will take 5 floats in the array.
+		// Each vertex will take 8 floats in the array.
 		fun toBuffer(dataArray: FastFloatBuffer, elementArray: FastShortBuffer) {
-			val dirtTxr = Textures.atlas.coordsOf(Textures.dirt)
-			val grassTopTxr = Textures.atlas.coordsOf(Textures.grassTop)
-			val grassSideTxr = Textures.atlas.coordsOf(Textures.grassSide)
-			val snowSideTxr = Textures.atlas.coordsOf(Textures.grassSnowedSide)
-			val snowTopTxr = Textures.atlas.coordsOf(Textures.snowTop)
 			if (top) {
-				val txr = when(blockType) {
-					1 -> grassTopTxr
-					2 -> dirtTxr
-					3 -> snowTopTxr
-					else -> dirtTxr
-				}
+				val txr = blockType.textureSet?.top ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 					base+0, base+1, base+2, base+2, base+3, base+0
@@ -148,7 +100,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				)
 			}
 			if (bottom) {
-				val txr = dirtTxr
+				val txr = blockType.textureSet?.bottom ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
@@ -169,12 +121,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				)
 			}
 			if (back) {
-				val txr = when(blockType) {
-					1 -> grassSideTxr
-					2 -> dirtTxr
-					3 -> snowSideTxr
-					else -> dirtTxr
-				}
+				val txr = blockType.textureSet?.back ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
@@ -195,12 +142,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				)
 			}
 			if (front) {
-				val txr = when(blockType) {
-					1 -> grassSideTxr
-					2 -> dirtTxr
-					3 -> snowSideTxr
-					else -> dirtTxr
-				}
+				val txr = blockType.textureSet?.front ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
@@ -221,12 +163,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				)
 			}
 			if (left) {
-				val txr = when(blockType) {
-					1 -> grassSideTxr
-					2 -> dirtTxr
-					3 -> snowSideTxr
-					else -> dirtTxr
-				}
+				val txr = blockType.textureSet?.left ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
@@ -247,12 +184,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 				)
 			}
 			if (right) {
-				val txr = when(blockType) {
-					1 -> grassSideTxr
-					2 -> dirtTxr
-					3 -> snowSideTxr
-					else -> dirtTxr
-				}
+				val txr = blockType.textureSet?.right ?: TextureCoord(0f, 0f, 0f, 0f)
 				val base = dataArray.length / 8
 				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
@@ -276,13 +208,13 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 	}
 
 	// Converts the cube map into a display list of voxels. Optimizes away as many as possible.
-	private fun genDL(cubeMap: Array<Int>): MutableList<Voxel> {
+	private fun genDL(cubeMap: Array<Block>): MutableList<Voxel> {
 		val displayList = ArrayList<Voxel>(16*16*16)
 
 		for (x in 0 until 16) {
 			for (y in 0 until 16) {
 				for (z in 0 until 16) {
-					fun isFilled(x: Int, y: Int, z: Int) = cubeMap[coord(x, y, z)] > 0
+					fun isFilled(x: Int, y: Int, z: Int) = cubeMap[coord(x, y, z)].isFilled
 					if (isFilled(x, y, z)) {
 						fun onEdge(c: Int) = c == 0 || c == 15
 						fun isEdgeBlock(x: Int, y: Int, z: Int) = onEdge(x) || onEdge(y) || onEdge(z)
