@@ -1,0 +1,42 @@
+buildscript {
+	ext.kotlin_version = '1.2.31'
+
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+	}
+}
+
+group 'net.kayateia'
+version '3.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+project.ext.lwjglVersion = "3.0.0"
+project.ext.lwjglPlatformVersion = "3.0.0"
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+	compile "org.lwjgl:lwjgl:${lwjglVersion}"
+	compile "org.lwjgl:lwjgl-platform:${lwjglPlatformVersion}:natives-windows"
+	compile "org.lwjgl:lwjgl-platform:${lwjglPlatformVersion}:natives-linux"
+	compile "org.lwjgl:lwjgl-platform:${lwjglPlatformVersion}:natives-osx"
+	compile "com.flowpowered:flow-noise:1.0.0"
+	testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+compileKotlin {
+	kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+	kotlinOptions.jvmTarget = "1.8"
+}

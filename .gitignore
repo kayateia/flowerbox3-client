@@ -1,0 +1,6 @@
+build/
+out/
+textures/
+.gradle/
+.idea/
+
