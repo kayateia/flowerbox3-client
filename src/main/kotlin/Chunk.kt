@@ -37,7 +37,8 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 		genLand()
 	}
 
-	private val displayList by lazy { genDL(genLand()) }
+	private val land by lazy { genLand() }
+	private val displayList by lazy { genDL(land) }
 	val buffers by lazy { genBuffers(displayList) }
 
 	// Generates the cube map.
@@ -66,6 +67,40 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 		return cubeMap
 	}
 
+	// I really wish I understood Kotlin enough to combine these into a working generic, but I
+	// guess for now this will have to do.
+	class FastFloatBuffer(private val initialSize: Int) {
+		private val array: FloatArray = FloatArray(initialSize)
+		private var idx: Int = 0
+
+		fun addAll(vararg vs: Float) {
+			for (v in vs)
+				array[idx++] = v
+		}
+
+		val length get() = idx
+
+		fun result(): FloatArray {
+			return array.copyOfRange(0, length)
+		}
+	}
+
+	class FastShortBuffer(private val initialSize: Int) {
+		private val array: ShortArray = ShortArray(initialSize)
+		private var idx: Int = 0
+
+		fun addAll(vararg vs: Int) {
+			for (v in vs)
+				array[idx++] = v.toShort()
+		}
+
+		val length get() = idx
+
+		fun result(): ShortArray {
+			return array.copyOfRange(0, length)
+		}
+	}
+
 	// Represents one voxel derived from the cube map.
 	class Voxel(val x: Int, val y: Int, val z: Int, private val blockType: Int,
 				private val top: Boolean = true, private val left: Boolean = true,
@@ -80,7 +115,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 		val isEmpty get() = !top && !left && !right && !bottom && !front && !back
 
 		// Each vertex will take 5 floats in the array.
-		fun toBuffer(dataArray: MutableList<Float>, elementArray: MutableList<Int>) {
+		fun toBuffer(dataArray: FastFloatBuffer, elementArray: FastShortBuffer) {
 			val dirtTxr = Textures.atlas.coordsOf(Textures.dirt)
 			val grassTopTxr = Textures.atlas.coordsOf(Textures.grassTop)
 			val grassSideTxr = Textures.atlas.coordsOf(Textures.grassSide)
@@ -93,32 +128,32 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					3 -> snowTopTxr
 					else -> dirtTxr
 				}
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
 					base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
-						x+size, y+size, z-size,
-						0f, 1f, 0f,
-						txr.s2, txr.t1,
-						x-size, y+size, z-size,
-						0f, 1f, 0f,
-						txr.s1, txr.t1,
-						x-size, y+size, z+size,
-						0f, 1f, 0f,
-						txr.s1, txr.t2,
-						x+size, y+size, z+size,
-						0f, 1f, 0f,
-						txr.s2, txr.t2
-				))
+				)
+				dataArray.addAll(
+					x+size, y+size, z-size,
+					0f, 1f, 0f,
+					txr.s2, txr.t1,
+					x-size, y+size, z-size,
+					0f, 1f, 0f,
+					txr.s1, txr.t1,
+					x-size, y+size, z+size,
+					0f, 1f, 0f,
+					txr.s1, txr.t2,
+					x+size, y+size, z+size,
+					0f, 1f, 0f,
+					txr.s2, txr.t2
+				)
 			}
 			if (bottom) {
 				val txr = dirtTxr
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
-					base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
+						base+0, base+1, base+2, base+2, base+3, base+0
+				)
+				dataArray.addAll(
 					x+size, y-size, z+size,
 					0f, -1f, 0f,
 					txr.s2, txr.t1,
@@ -131,7 +166,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					x+size, y-size, z-size,
 					0f, -1f, 0f,
 					txr.s2, txr.t2
-				))
+				)
 			}
 			if (back) {
 				val txr = when(blockType) {
@@ -140,11 +175,11 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					3 -> snowSideTxr
 					else -> dirtTxr
 				}
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
-					base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
+						base+0, base+1, base+2, base+2, base+3, base+0
+				)
+				dataArray.addAll(
 					x+size, y+size, z+size,
 					0f, 0f, 1f,
 					txr.s2, txr.t1,
@@ -157,7 +192,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					x+size, y-size, z+size,
 					0f, 0f, 1f,
 					txr.s2, txr.t2
-				))
+				)
 			}
 			if (front) {
 				val txr = when(blockType) {
@@ -166,11 +201,11 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					3 -> snowSideTxr
 					else -> dirtTxr
 				}
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
+				)
+				dataArray.addAll(
 					x+size, y-size, z-size,
 					0f, 0f, -1f,
 					txr.s2, txr.t2,
@@ -183,7 +218,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					x+size, y+size, z-size,
 					0f, 0f, -1f,
 					txr.s2, txr.t1
-				))
+				)
 			}
 			if (left) {
 				val txr = when(blockType) {
@@ -192,11 +227,11 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					3 -> snowSideTxr
 					else -> dirtTxr
 				}
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
+				)
+				dataArray.addAll(
 					x-size, y+size, z+size,
 					-1f, 0f, 0f,
 					txr.s2, txr.t1,
@@ -209,7 +244,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					x-size, y-size, z+size,
 					-1f, 0f, 0f,
 					txr.s2, txr.t2
-				))
+				)
 			}
 			if (right) {
 				val txr = when(blockType) {
@@ -218,11 +253,11 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					3 -> snowSideTxr
 					else -> dirtTxr
 				}
-				val base = dataArray.size / 8
-				elementArray.addAll(arrayOf(
+				val base = dataArray.length / 8
+				elementArray.addAll(
 						base+0, base+1, base+2, base+2, base+3, base+0
-				))
-				dataArray.addAll(arrayOf(
+				)
+				dataArray.addAll(
 					x+size, y+size, z-size,
 					1f, 0f, 0f,
 					txr.s2, txr.t1,
@@ -235,14 +270,14 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 					x+size, y-size, z-size,
 					1f, 0f, 0f,
 					txr.s2, txr.t2
-				))
+				)
 			}
 		}
 	}
 
 	// Converts the cube map into a display list of voxels. Optimizes away as many as possible.
 	private fun genDL(cubeMap: Array<Int>): MutableList<Voxel> {
-		val displayList = ArrayList<Voxel>()
+		val displayList = ArrayList<Voxel>(16*16*16)
 
 		for (x in 0 until 16) {
 			for (y in 0 until 16) {
@@ -274,12 +309,12 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 		return displayList
 	}
 
-	data class Buffers(val vertsAndSt: MutableList<Float>, val elems: MutableList<Int>)
+	data class Buffers(val vertsAndSt: FastFloatBuffer, val elems: FastShortBuffer)
 
 	private fun genBuffers(voxels: MutableList<Voxel>): Buffers {
 		// These initial capacities are a worst case estimate, so they will basically always overrun reality.
-		val vas = ArrayList<Float>(voxels.size * 6 * 4 * 8)
-		val es = ArrayList<Int>(voxels.size * 6 * 6)
+		val vas = FastFloatBuffer(voxels.size * 6 * 4 * 8)
+		val es = FastShortBuffer(voxels.size * 6 * 6)
 		for (v in voxels) {
 			v.toBuffer(vas, es)
 		}
@@ -292,15 +327,14 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 	private var vboiId: Int = 0
 
 	fun createVertexArrays() {
-		val vertByteBuffer = BufferUtils.createByteBuffer(buffers.vertsAndSt.size * 4);
+		val vertByteBuffer = BufferUtils.createByteBuffer(buffers.vertsAndSt.length * 4);
 		val vertFloatBuffer = vertByteBuffer.asFloatBuffer()
-		vertFloatBuffer.put(buffers.vertsAndSt.toFloatArray(), 0, buffers.vertsAndSt.size)
+		vertFloatBuffer.put(buffers.vertsAndSt.result(), 0, buffers.vertsAndSt.length)
 		vertFloatBuffer.flip()
 
-		val indexByteBuffer = BufferUtils.createByteBuffer(buffers.elems.size * 2)
+		val indexByteBuffer = BufferUtils.createByteBuffer(buffers.elems.length * 2)
 		val indexShortBuffer = indexByteBuffer.asShortBuffer()
-		for (e in buffers.elems)
-			indexShortBuffer.put(e.toShort())
+		indexShortBuffer.put(buffers.elems.result(), 0, buffers.elems.length)
 		indexShortBuffer.flip()
 
 		vaoId = glGenVertexArrays()
@@ -346,7 +380,7 @@ class Chunk(private val globalX: Float, private val globalZ: Float) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboiId)
 
 		// Draw the vertices
-		glDrawElements(GL_TRIANGLES, buffers.elems.size, GL_UNSIGNED_SHORT, 0)
+		glDrawElements(GL_TRIANGLES, buffers.elems.length, GL_UNSIGNED_SHORT, 0)
 
 		// Put everything back to default (deselect)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
