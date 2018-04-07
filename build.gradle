@@ -2,7 +2,7 @@ buildscript {
 	ext.kotlin_version = '1.2.31'
 
 	repositories {
-		mavenCentral()
+		jcenter()
 	}
 	dependencies {
 		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -14,6 +14,7 @@ version '3.0-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'antlr'
 
 sourceCompatibility = 1.8
 
@@ -21,10 +22,12 @@ project.ext.lwjglVersion = "3.0.0"
 project.ext.lwjglPlatformVersion = "3.0.0"
 
 repositories {
-	mavenCentral()
+	jcenter()
 }
 
 dependencies {
+	antlr "org.antlr:antlr4:4.5.1"
+	compile "org.antlr:antlr4-runtime:4.5.1"
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 	compile "org.lwjgl:lwjgl:${lwjglVersion}"
 	compile "org.lwjgl:lwjgl-platform:${lwjglPlatformVersion}:natives-windows"
@@ -34,9 +37,28 @@ dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+generateGrammarSource {
+	maxHeapSize = "64m"
+	arguments += ['-package', 'net.kayateia.flowerbox.common.cherry.antlr']
+//	outputDirectory = new File("build/generated-src/antlr/main/net/kayateia/flowerbox/common/cherry/antlr".toString())
+}
+
 compileKotlin {
 	kotlinOptions.jvmTarget = "1.8"
 }
 compileTestKotlin {
 	kotlinOptions.jvmTarget = "1.8"
 }
+
+compileJava.dependsOn generateGrammarSource
+sourceSets {
+	generated {
+		java.srcDir 'build/generated-src/antlr/main/'
+	}
+}
+compileJava.source sourceSets.generated.java, sourceSets.main.java
+compileKotlin.source sourceSets.generated.java, sourceSets.main.java, sourceSets.main.kotlin
+
+/*clean {
+	delete "generated-src"
+} */
