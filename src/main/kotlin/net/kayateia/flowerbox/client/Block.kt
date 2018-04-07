@@ -7,7 +7,7 @@
 
 package net.kayateia.flowerbox.client
 
-import net.kayateia.flowerbox.client.collections.pickRandom
+import net.kayateia.flowerbox.common.collections.pickRandom
 
 data class TextureSet(val top: TextureCoord,
 						val bottom: TextureCoord,

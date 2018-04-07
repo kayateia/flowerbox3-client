@@ -5,7 +5,7 @@
 	This code is licensed under the MIT license; please see LICENSE.md in the root of the project.
  */
 
-package net.kayateia.flowerbox.client.collections
+package net.kayateia.flowerbox.common.collections
 
 import java.util.Random
 
