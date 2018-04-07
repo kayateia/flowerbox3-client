@@ -5,7 +5,7 @@
 	This code is licensed under the MIT license; please see LICENSE.md in the root of the project.
  */
 
-package net.kayateia.flowerbox.client
+package net.kayateia.flowerbox.client.collections
 
 // I really wish I understood Kotlin enough to combine these into a working generic, but I
 // guess for now this will have to do.

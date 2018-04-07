@@ -8,6 +8,8 @@
 package net.kayateia.flowerbox.client
 
 import com.flowpowered.noise.module.source.Perlin
+import net.kayateia.flowerbox.client.collections.FastFloatBuffer
+import net.kayateia.flowerbox.client.collections.FastShortBuffer
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL30.*

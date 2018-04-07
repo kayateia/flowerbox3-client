@@ -16,6 +16,8 @@ object Textures {
 		atlas.load(listOf(
 				"grass_side.png",
 				"grass_top.png",
+				"grass_top2.png",
+				"grass_top3.png",
 				"dirt.png",
 				"grass_side_snowed.png",
 				"snow.png"
@@ -24,8 +26,10 @@ object Textures {
 	}
 
 	const val grassSide = 0
-	const val grassTop = 1
-	const val dirt = 2
-	const val grassSnowedSide = 3
-	const val snowTop = 4
+	const val grassTop1 = 1
+	const val grassTop2 = 2
+	const val grassTop3 = 3
+	const val dirt = 4
+	const val grassSnowedSide = 5
+	const val snowTop = 6
 }
