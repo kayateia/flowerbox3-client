@@ -5,13 +5,16 @@
 	This code is licensed under the MIT license; please see LICENSE.md in the root of the project.
  */
 
-package net.kayateia.flowerbox.common.cherry
+package net.kayateia.flowerbox.common.cherry.parser
+
+// Root interface for all AST nodes
+interface AstNode
 
 // Overall program container
-data class AstProgram(val stmts: List<AstStatement>)
+data class AstProgram(val stmts: List<AstStatement>) : AstNode
 
 // Statements
-interface AstStatement
+interface AstStatement : AstNode
 data class AstFuncDecl(val func: AstFuncExpr) : AstStatement
 data class AstBlock(val stmts: List<AstStatement>) : AstStatement
 data class AstVarStmt(val decls: List<AstVarDecl>) : AstStatement
@@ -36,14 +39,14 @@ data class AstThrowStmt(val exprs: List<AstExpr>) : AstStatement
 data class AstTryStmt(val block: AstBlock, val catches: List<AstCatch>, val finally: AstFinally) : AstStatement
 
 // Try/catch/finally
-data class AstCatch(val id: String, val block: AstBlock)
-data class AstFinally(val block: AstBlock)
+data class AstCatch(val id: String, val block: AstBlock) : AstNode
+data class AstFinally(val block: AstBlock) : AstNode
 
 // Variable declarations
-data class AstVarDecl(val id: String, val init: AstExpr?)
+data class AstVarDecl(val id: String, val init: AstExpr?) : AstNode
 
 // Expression Types
-interface AstExpr
+interface AstExpr : AstNode
 interface AstAry : AstExpr {
 	val op: String
 }
@@ -68,6 +71,7 @@ data class AstTypeofExpr(val expr: AstExpr) : AstExpr
 data class AstPreExpr(override val op: String, override val expr: AstExpr) : AstUnary
 data class AstUnaryExpr(override val op: String, override val expr: AstExpr) : AstUnary
 data class AstBinaryExpr(override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
+data class AstLazyBinaryExpr(override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
 data class AstTernaryExpr(val cond: AstExpr, val ifTrue: AstExpr, val ifFalse: AstExpr) : AstExpr
 data class AstThisExpr(val mkh: Boolean = true) : AstExpr
 data class AstIdExpr(val id: String) : AstExpr
@@ -77,7 +81,7 @@ data class AstObjectExpr(val value: Map<Any, AstObjectProperty>) : AstExpr
 data class AstExprListExpr(val exprs: List<AstExpr>) : AstExpr
 
 // Object definition
-interface AstObjectProperty
+interface AstObjectProperty : AstNode
 data class AstObjectAssignment(val name: Any, val value: AstExpr) : AstObjectProperty
 data class AstObjectGetter(val name: String, val block: AstBlock) : AstObjectProperty
 data class AstObjectSetter(val name: String, val param: String, val block: AstBlock) : AstObjectProperty

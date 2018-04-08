@@ -5,7 +5,7 @@
 	This code is licensed under the MIT license; please see LICENSE.md in the root of the project.
  */
 
-package net.kayateia.flowerbox.common.cherry
+package net.kayateia.flowerbox.common.cherry.parser
 
 import net.kayateia.flowerbox.common.cherry.antlr.CherryParser.*
 
@@ -85,8 +85,8 @@ fun SingleExpressionContext.toAst(): AstExpr = when(this) {
 	is BitAndExpressionContext				-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
 	is BitXOrExpressionContext				-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
 	is BitOrExpressionContext				-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
-	is LogicalAndExpressionContext			-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
-	is LogicalOrExpressionContext			-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
+	is LogicalAndExpressionContext			-> AstLazyBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
+	is LogicalOrExpressionContext			-> AstLazyBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
 	is TernaryExpressionContext				-> AstTernaryExpr(singleExpression(0).toAst(), singleExpression(1).toAst(), singleExpression(2).toAst())
 	is AssignmentExpressionContext			-> AstBinaryExpr(singleExpression(0).toAst(), getChild(1).text, singleExpression(1).toAst())
 	is AssignmentOperatorExpressionContext	-> AstBinaryExpr(singleExpression(0).toAst(), assignmentOperator().text, singleExpression(1).toAst())
@@ -142,7 +142,8 @@ fun PropertyNameContext.toAst() : Any = when {
 }
 
 fun FunctionDeclarationContext.toAst(): AstFuncDecl = AstFuncDecl(
-	AstFuncExpr(
-		Identifier().text, (formalParameterList()?.toAst()) ?: listOf(), AstBlock(functionBody().sourceElements().toAst())
-	)
+		AstFuncExpr(
+				Identifier().text, (formalParameterList()?.toAst())
+				?: listOf(), AstBlock(functionBody().sourceElements().toAst())
+		)
 )

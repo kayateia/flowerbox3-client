@@ -5,9 +5,10 @@
 	This code is licensed under the MIT license; please see LICENSE.md in the root of the project.
  */
 
-package net.kayateia.flowerbox.common.cherry
+package net.kayateia.flowerbox.common.cherry.parser
 
 import net.kayateia.flowerbox.common.cherry.antlr.*
+import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.atn.ATNConfigSet
@@ -39,7 +40,7 @@ class Parser {
 
 	companion object {
 		fun test() {
-			Parser().parse("""
+/*			val ast = Parser().parse("""
 function factorial(n) {
 	if (n == 0)
 		return 1;
@@ -52,7 +53,13 @@ var i;
 document.clear();
 for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
-		""")
+		""") */
+			val ast = Parser().parse("""
+				(5 * 10 + 5) - 20;
+			""")
+			val rt = Runtime(ast)
+			rt.execute(10000)
+			println(rt)
 		}
 	}
 }
