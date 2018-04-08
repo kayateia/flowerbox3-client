@@ -10,10 +10,11 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 import net.kayateia.flowerbox.common.cherry.parser.AstExprListExpr
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object ExprListExpr : Step {
-	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstExprListExpr -> Step.execList(runtime, node.exprs)
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

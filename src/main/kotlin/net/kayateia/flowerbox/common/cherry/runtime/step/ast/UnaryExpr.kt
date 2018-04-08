@@ -10,30 +10,31 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstUnaryExpr
 import net.kayateia.flowerbox.common.cherry.runtime.Coercion
+import net.kayateia.flowerbox.common.cherry.runtime.RValue
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object UnaryExpr : Step {
-	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstUnaryExpr -> {
-			val value = Step.toStep(node.expr).execute(runtime, node.expr)
-			runtime.stepAdd()
+			val value = Step.exec(runtime, node.expr)
 			opExec(node.op, value)
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 
-	private fun opExec(op: String, value: Any?): Any? = when (op) {
-		"+" -> value
+	private fun opExec(op: String, value: Any?): Value = when (op) {
+		"+" -> RValue(value)
 		"-" -> if (value is Double)
-				-value
+				RValue(-value)
 			else
 				throw Exception("type error on unary -")
 		"~" -> if (value is Double)
 				throw Exception("unary ~ not supported")
 			else
 				throw Exception("type error on unary ~")
-		"!" -> !Coercion.toBool(value)
+		"!" -> RValue(!Coercion.toBool(value))
 		else -> throw Exception("invalid unary operator ${op}")
 	}
 }

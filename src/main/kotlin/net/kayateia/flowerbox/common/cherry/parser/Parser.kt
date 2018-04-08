@@ -55,13 +55,13 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("""
-				(5 * 10 + 5) - 20;
+				var i = (5 * 10 + 5) - 20;
+				i = i + 1
 			""")
 			val runtime = Runtime(ast)
-			var rv = runtime.execute(5)
-			while (!rv)
-				rv = runtime.executeMore()
-			println("${runtime.completed} ${runtime.result} ${rv}")
+			val rv = runtime.execute()
+			println("$runtime")
+			// println("${runtime.completed} ${runtime.result} ${rv}")
 		}
 	}
 }

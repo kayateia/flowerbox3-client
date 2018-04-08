@@ -10,18 +10,12 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 import net.kayateia.flowerbox.common.cherry.parser.AstExprStmt
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object ExprStmt : Step {
-	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
-		is AstExprStmt -> {
-			var last: Any? = null
-			node.exprs.forEach {
-				last = Step.toStep(it).execute(runtime, it)
-				runtime.stepAdd()
-			}
-			last
-		}
+	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
+		is AstExprStmt -> Step.execList(runtime, node.exprs)
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

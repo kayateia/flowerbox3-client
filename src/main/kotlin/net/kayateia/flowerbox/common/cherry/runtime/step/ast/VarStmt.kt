@@ -10,10 +10,11 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstVarStmt
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object VarStmt : Step {
-	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstVarStmt -> Step.execList(runtime, node.decls)
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

@@ -14,14 +14,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object Block : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode) = when (node) {
-		is AstBlock -> {
-			var last: Any? = null
-			node.stmts.forEach {
-				last = Step.toStep(it).execute(runtime, it)
-				runtime.stepAdd()
-			}
-			last
-		}
+		is AstBlock -> Step.execList(runtime, node.stmts)
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

@@ -23,4 +23,6 @@ open class MapScope(override val parent: Scope? = null) : Scope {
 		}
 	}
 	override fun has(name: String): Boolean = if (hasLocal(name)) true else (parent?.has(name) ?: false)
+
+	override fun toString(): String = "mapscope: ${vars}"
 }

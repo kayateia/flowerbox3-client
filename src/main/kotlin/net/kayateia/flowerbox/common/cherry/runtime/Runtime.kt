@@ -24,6 +24,9 @@ class Runtime(val program: AstProgram) {
 	var result: Any? = null
 	var exception: Throwable? = null
 
+	override fun toString(): String =
+		"runtime: totalSteps ${totalSteps}, maxSteps ${maxSteps}, completed ${completed}, result ${result}, exc ${exception}\n${scopeStack}"
+
 	// Returns true if we've fully completed execution.
 	fun execute(maxSteps: Int = -1): Boolean {
 		this.maxSteps = maxSteps
@@ -65,6 +68,7 @@ class Runtime(val program: AstProgram) {
 
 	fun scopePush(scope: Scope = MapScope(scopeStack.top)): Scope = scopeStack.push(scope)
 	fun scopePop(): Scope = scopeStack.pop()
+	val scope: Scope get() = scopeStack.top
 
 	suspend fun stepAdd() {
 		if (maxSteps < 0)

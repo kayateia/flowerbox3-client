@@ -26,4 +26,9 @@ class ScopeStack {
 	fun push(scope: Scope) = stack.push(scope)
 	fun pop() = stack.pop()
 	val top: Scope get() = stack.peek()
+
+	override fun toString(): String =
+		"Scope Stack:\n" +
+		stack.map { "   ${it} (${it.javaClass.canonicalName})" }
+			.fold("", { acc, s -> acc + "\n" + s })
 }
