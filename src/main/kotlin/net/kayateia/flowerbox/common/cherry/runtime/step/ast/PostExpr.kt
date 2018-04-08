@@ -7,12 +7,13 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstPostExpr
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class PostExpr(val node: AstPostExpr) : Step {
-	override fun execute(runtime: Runtime) {
+object PostExpr : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? {
 		TODO()
 	}
 }

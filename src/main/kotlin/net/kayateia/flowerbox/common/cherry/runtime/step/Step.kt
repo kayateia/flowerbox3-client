@@ -13,31 +13,40 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.ast.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.helper.NoOp
 
 interface Step {
-	fun execute(runtime: Runtime)
+	suspend fun execute(runtime: Runtime, node: AstNode): Any?
 
 	companion object {
 		fun toStep(node: AstNode): Step = when(node) {
-			is AstProgram				-> Program(node)
-			is AstFuncDecl				-> FuncDecl(node)
-			is AstBlock					-> Block(node)
-			is AstVarStmt				-> VarStmt(node)
-			is AstEmptyStmt				-> NoOp()
-			is AstExprStmt				-> ExprStmt(node)
-			is AstIfStmt				-> IfStmt(node)
+			is AstProgram				-> Program
+			is AstFuncDecl				-> FuncDecl
+			is AstBlock					-> Block
+			is AstVarStmt				-> VarStmt
+			is AstEmptyStmt				-> NoOp
+			is AstExprStmt				-> ExprStmt
+			is AstIfStmt				-> IfStmt
 
-			//is AstFuncExpr				-> FuncExpr(node)
-			//is AstIndexExpr				-> IndexExpr(node)
-			//is AstPostExpr				-> PostExpr(node)
-			//is AstPreExpr				-> PreExpr(node)
-			is AstUnaryExpr				-> UnaryExpr(node)
-			is AstBinaryExpr			-> BinaryExpr(node)
+			//is AstFuncExpr				-> FuncExpr
+			//is AstIndexExpr				-> IndexExpr
+			//is AstPostExpr				-> PostExpr
+			//is AstPreExpr				-> PreExpr
+			is AstUnaryExpr				-> UnaryExpr
+			is AstBinaryExpr			-> BinaryExpr
 
-			is AstLiteralExpr			-> LiteralExpr(node)
-			is AstExprListExpr			-> ExprListExpr(node)
+			is AstLiteralExpr			-> LiteralExpr
+			is AstExprListExpr			-> ExprListExpr
 
 			else -> {
 				throw Exception("invalid step type ${node.javaClass.canonicalName}")
 			}
+		}
+
+		suspend fun execList(runtime: Runtime, items: List<AstNode>): Any? {
+			var last: Any? = null
+			items.forEach {
+				last = toStep(it).execute(runtime, it)
+				runtime.stepAdd()
+			}
+			return last
 		}
 	}
 }

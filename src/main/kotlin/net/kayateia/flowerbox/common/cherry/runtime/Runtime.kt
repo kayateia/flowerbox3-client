@@ -11,43 +11,70 @@ import net.kayateia.flowerbox.common.cherry.parser.AstProgram
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 class Runtime(val program: AstProgram) {
-	val opStack = OpStack()
-	val codeStack = CodeStack()
 	val scopeStack = ScopeStack()
+	var totalSteps = 0
+	var maxSteps = 0
+	var nextStep: Continuation<Unit>? = null
 
-	private var started = false
+	var completed = false
+	var result: Any? = null
+	var exception: Throwable? = null
 
 	// Returns true if we've fully completed execution.
-	fun execute(maxSteps: Int): Boolean {
-		// Get us started, if nothing has been pushed.
-		if (codeStack.isEmpty()) {
-			if (started) {
-				return true
-			} else {
-				codeStack.push(Step.toStep(program))
-				started = true
+	fun execute(maxSteps: Int = -1): Boolean {
+		this.maxSteps = maxSteps
+		totalSteps = 0
+
+		val startFunc = suspend {
+			Step.toStep(program).execute(this, program)
+		}
+
+		nextStep = startFunc.createCoroutine(object : Continuation<Any?> {
+			override val context: CoroutineContext
+				get() = EmptyCoroutineContext
+
+			override fun resume(value: Any?) {
+				result = value
+				completed = true
 			}
-		}
 
-		for (s in 0 until maxSteps) {
-			if (codeStack.isEmpty())
-				return true
+			override fun resumeWithException(exc: Throwable) {
+				exception = exc
+				completed = true
+			}
+		})
+		nextStep!!.resume(Unit)
 
-			val nextStep = codeStack.pop()
-			nextStep.execute(this)
-		}
-
-		return false
+		return completed
 	}
 
-	fun opPush(value: Any?) = opStack.push(value)
-	fun opPop(): Any? = opStack.pop()
+	fun executeMore(): Boolean {
+		if (nextStep == null)
+			throw Exception("Executing was never begun, can't continue")
+		if (completed)
+			throw Exception("Already completed, can't continue")
+
+		nextStep!!.resume(Unit)
+
+		return completed
+	}
 
 	fun scopePush(scope: Scope = MapScope(scopeStack.top)): Scope = scopeStack.push(scope)
 	fun scopePop(): Scope = scopeStack.pop()
 
-	fun codePush(step: Step) = codeStack.push(step)
-	fun codePop(): Step = codeStack.pop()
+	suspend fun stepAdd() {
+		if (maxSteps < 0)
+			return
+
+		totalSteps++
+		if (totalSteps >= maxSteps)
+			return suspendCoroutine {
+				nextStep = it
+				COROUTINE_SUSPENDED
+			}
+	}
 }

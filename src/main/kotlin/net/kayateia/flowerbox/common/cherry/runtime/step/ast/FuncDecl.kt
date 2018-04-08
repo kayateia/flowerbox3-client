@@ -8,12 +8,17 @@
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstFuncDecl
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class FuncDecl(val node: AstFuncDecl) : Statement() {
-	override fun execute(runtime: Runtime) {
-		super.execute(runtime)
-		runtime.codeStack.push(Step.toStep(node.func))
+object FuncDecl : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+		is AstFuncDecl -> {
+			val rv = Step.toStep(node.func).execute(runtime, node.func)
+			runtime.stepAdd()
+			rv
+		}
+		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

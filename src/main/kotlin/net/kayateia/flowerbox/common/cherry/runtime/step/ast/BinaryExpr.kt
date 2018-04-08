@@ -8,30 +8,29 @@
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstBinaryExpr
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Coercion
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class BinaryExpr(val node: AstBinaryExpr) : Step {
-	override fun execute(runtime: Runtime) {
-		runtime.codePush(BinaryOpExec(node))
-		runtime.codePush(Step.toStep(node.right))
-		runtime.codePush(Step.toStep(node.left))
-	}
-}
-
-class BinaryOpExec(val node: AstBinaryExpr) : Step {
-	override fun execute(runtime: Runtime) {
-		val right = runtime.opPop()
-		val left = runtime.opPop()
-		when (node.op) {
-			"*" -> runtime.opPush(Coercion.toNum(left) * Coercion.toNum(right))
-			"/" -> runtime.opPush(Coercion.toNum(left) / Coercion.toNum(right))
-			"%" -> runtime.opPush(Coercion.toNum(left) % Coercion.toNum(right))
-			"+" -> runtime.opPush(Coercion.toNum(left) + Coercion.toNum(right)) // TODO - strings
-			"-" -> runtime.opPush(Coercion.toNum(left) - Coercion.toNum(right))
-			else -> throw Exception("unsupported binary op ${node.op}")
+object BinaryExpr : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+		is AstBinaryExpr -> {
+			val left = Step.toStep(node.left).execute(runtime, node.left)
+			runtime.stepAdd()
+			val right = Step.toStep(node.right).execute(runtime, node.right)
+			runtime.stepAdd()
+			opExec(node.op, left, right)
 		}
+		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
+	}
+
+	private fun opExec(op: String, left: Any?, right: Any?): Any? = when (op) {
+		"*" -> Coercion.toNum(left) * Coercion.toNum(right)
+		"/" -> Coercion.toNum(left) / Coercion.toNum(right)
+		"%" -> Coercion.toNum(left) % Coercion.toNum(right)
+		"+" -> Coercion.toNum(left) + Coercion.toNum(right) // TODO - strings
+		"-" -> Coercion.toNum(left) - Coercion.toNum(right)
+		else -> throw Exception("unsupported binary op ${op}")
 	}
 }
-

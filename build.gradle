@@ -59,6 +59,12 @@ sourceSets {
 compileJava.source sourceSets.generated.java, sourceSets.main.java
 compileKotlin.source sourceSets.generated.java, sourceSets.main.java, sourceSets.main.kotlin
 
+kotlin {
+	experimental {
+		coroutines 'enable'
+	}
+}
+
 /*clean {
 	delete "generated-src"
 } */

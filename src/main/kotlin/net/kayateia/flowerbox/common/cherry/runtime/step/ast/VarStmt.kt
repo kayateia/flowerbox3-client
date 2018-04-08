@@ -7,15 +7,14 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstVarStmt
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class VarStmt(val node: AstVarStmt) : Statement() {
-	override fun execute(runtime: Runtime) {
-		super.execute(runtime)
-		node.decls.reversed().forEach {
-			runtime.codePush(Step.toStep(it))
-		}
+object VarStmt : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+		is AstVarStmt -> Step.execList(runtime, node.decls)
+		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

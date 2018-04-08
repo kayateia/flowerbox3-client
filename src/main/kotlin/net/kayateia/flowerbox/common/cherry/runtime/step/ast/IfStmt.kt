@@ -8,26 +8,20 @@
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstIfStmt
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Coercion
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class IfStmt(val node: AstIfStmt) : Statement() {
-	override fun execute(runtime: Runtime) {
-		super.execute(runtime)
-		runtime.codePush(IfStmtDecider(node))
-		node.exprs.reversed().forEach {
-			runtime.codePush(Step.toStep(it))
+object IfStmt : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+		is AstIfStmt -> {
+			val result = Step.execList(runtime, node.exprs)
+			if (Coercion.toBool(result))
+				Step.toStep(node.ifTrue).execute(runtime, node.ifTrue)
+			else
+				Step.toStep(node.ifElse).execute(runtime, node.ifElse)
 		}
-	}
-}
-
-class IfStmtDecider(val node: AstIfStmt) : Step {
-	override fun execute(runtime: Runtime) {
-		val result = runtime.opPop()
-		if (Coercion.toBool(result))
-			runtime.codePush(Step.toStep(node.ifTrue))
-		else
-			runtime.codePush(Step.toStep(node.ifElse))
+		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

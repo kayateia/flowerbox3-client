@@ -7,10 +7,12 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.step.helper
 
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-class NoOp : Step {
-	override fun execute(runtime: Runtime) {
+object NoOp : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? {
+		return null
 	}
 }

@@ -8,12 +8,17 @@
 package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstLiteralExpr
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
-// This class is like, LITERALLY... literals.
-class LiteralExpr(val node: AstLiteralExpr) : Step {
-	override fun execute(runtime: Runtime) {
-		runtime.opPush(node.value)
+// This object is like, LITERALLY... literals.
+object LiteralExpr : Step {
+	override suspend fun execute(runtime: Runtime, node: AstNode): Any? = when (node) {
+		is AstLiteralExpr -> {
+			runtime.stepAdd()
+			node.value
+		}
+		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

@@ -57,9 +57,11 @@ for (i = 0; i <= 16; i++)
 			val ast = Parser().parse("""
 				(5 * 10 + 5) - 20;
 			""")
-			val rt = Runtime(ast)
-			rt.execute(10000)
-			println(rt)
+			val runtime = Runtime(ast)
+			var rv = runtime.execute(5)
+			while (!rv)
+				rv = runtime.executeMore()
+			println("${runtime.completed} ${runtime.result} ${rv}")
 		}
 	}
 }
