@@ -13,6 +13,7 @@ object Coercion {
 
 	fun toNum(value: Any?): Double = when (value) {
 		null -> throw Exception("found null when looking for number")
+		is Value -> toNum(value.value)
 		is Double -> value
 		is Boolean -> if (value) 1.0 else 0.0
 		is String -> throw Exception("found string when looking for number")

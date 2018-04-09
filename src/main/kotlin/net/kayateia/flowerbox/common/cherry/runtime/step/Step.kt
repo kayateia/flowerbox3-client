@@ -24,6 +24,8 @@ interface Step {
 			is AstEmptyStmt				-> NoOp
 			is AstExprStmt				-> ExprStmt
 			is AstIfStmt				-> IfStmt
+			is AstForSeq				-> ForSeq
+			is AstForVarSeq				-> ForSeq
 			is AstReturnStmt			-> ReturnStmt
 
 			is AstVarDecl				-> VarDecl
@@ -31,7 +33,7 @@ interface Step {
 			is AstFuncExpr				-> FuncExpr
 			//is AstIndexExpr				-> IndexExpr
 			is AstCallExpr				-> CallExpr
-			//is AstPostExpr				-> PostExpr
+			is AstPostExpr				-> PostExpr
 			//is AstPreExpr				-> PreExpr
 			is AstUnaryExpr				-> UnaryExpr
 			is AstBinaryExpr			-> BinaryExpr

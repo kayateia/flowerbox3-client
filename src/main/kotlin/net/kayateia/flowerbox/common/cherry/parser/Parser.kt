@@ -68,6 +68,12 @@ var j = test(2);
 var k = factorial(4);
 				var i = (5 * 10 + 5) - 20;
 				i = i + 1;
+
+var m = 0;
+for (var l=0; l<10; l++) {
+	m = m + 10;
+}
+
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute()
