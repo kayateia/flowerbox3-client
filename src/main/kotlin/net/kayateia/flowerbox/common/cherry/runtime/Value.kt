@@ -7,7 +7,6 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime
 
-import net.kayateia.flowerbox.common.cherry.parser.AstFuncDecl
 import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
@@ -15,6 +14,13 @@ interface Value {
 	var value: Any?
 	val rvalue: RValue
 		get() = RValue(value)
+
+	companion object {
+		fun getRootValue(value: Any?): Any? = when (value) {
+			is Value -> getRootValue(value.value)
+			else -> value
+		}
+	}
 }
 
 interface LValue : Value
@@ -40,6 +46,14 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
 		}
 
 	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params.fold("", {a,b -> "$a,$b"})})"
+}
+
+class IntrinsicValue(val delegate: (args: ArrayValue) -> Value) : Value {
+	override var value: Any?
+		get() = throw Exception("can't use intrinsic as RValue")
+		set(value) {
+			throw Exception("can't assign into an intrinsic")
+		}
 }
 
 class RValue(val constValue: Any?) : Value {

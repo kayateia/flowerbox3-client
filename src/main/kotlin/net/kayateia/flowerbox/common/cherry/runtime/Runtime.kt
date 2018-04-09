@@ -24,6 +24,10 @@ class Runtime(val program: AstProgram) {
 	var result: Any? = null
 	var exception: Throwable? = null
 
+	init {
+		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ args: ArrayValue -> RValue(5) }))
+	}
+
 	override fun toString(): String =
 		"runtime: totalSteps ${totalSteps}, maxSteps ${maxSteps}, completed ${completed}, result ${result}, exc ${exception}\n${scopeStack}"
 

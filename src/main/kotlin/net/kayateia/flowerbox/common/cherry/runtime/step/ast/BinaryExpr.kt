@@ -22,22 +22,30 @@ object BinaryExpr : Step {
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 
+	private fun opExecNum(left: Value, right: Value, op: (left: Double, right: Double) -> Double) =
+		RValue(op(Coercion.toNum(Value.getRootValue(left)), Coercion.toNum(Value.getRootValue(right))))
+
+	private fun opExecNumBool(left: Value, right: Value, op: (left: Double, right: Double) -> Boolean) =
+		RValue(op(Coercion.toNum(Value.getRootValue(left)), Coercion.toNum(Value.getRootValue(right))))
+
 	private fun opExec(op: String, left: Value, right: Value): Value = when (op) {
-		"*" -> RValue(Coercion.toNum(left.value) * Coercion.toNum(right.value))
-		"/" -> RValue(Coercion.toNum(left.value) / Coercion.toNum(right.value))
-		"%" -> RValue(Coercion.toNum(left.value) % Coercion.toNum(right.value))
-		"+" -> RValue(Coercion.toNum(left.value) + Coercion.toNum(right.value))	// TODO - strings
-		"-" -> RValue(Coercion.toNum(left.value) - Coercion.toNum(right.value))
-		"<" -> RValue(Coercion.toNum(left.value) < Coercion.toNum(right.value))
-		"<=" -> RValue(Coercion.toNum(left.value) <= Coercion.toNum(right.value))
-		">" -> RValue(Coercion.toNum(left.value) > Coercion.toNum(right.value))
-		">=" -> RValue(Coercion.toNum(left.value) >= Coercion.toNum(right.value))
-		"==" -> RValue(Coercion.toBool(left.value == right.value))					// TODO - non-Kotlin semantics
+		"*" -> opExecNum(left, right) { l, r -> l * r }
+		"/" -> opExecNum(left, right) { l, r -> l / r }
+		"%" -> opExecNum(left, right) { l, r -> l % r }
+		"+" -> opExecNum(left, right) { l, r -> l + r }		// TODO - strings
+		"-" -> opExecNum(left, right) { l, r -> l - r }
+		"<" -> opExecNumBool(left, right) { l, r -> l < r }
+		"<=" -> opExecNumBool(left, right) { l, r -> l <= r }
+		">" -> opExecNumBool(left, right) { l, r -> l > r }
+		">=" -> opExecNumBool(left, right) { l, r -> l >= r }
+
+		"==" -> RValue(Coercion.toBool(Value.getRootValue(left) == Value.getRootValue(right)))					// TODO - non-Kotlin semantics
 		"=" -> {
 			when (left) {
 				is LValue -> {
-					left.value = right.value
-					right.rvalue
+					val simplified = RValue(Value.getRootValue(right))
+					left.value = simplified
+					simplified
 				}
 				else -> throw Exception("can't assign to RValue")
 			}

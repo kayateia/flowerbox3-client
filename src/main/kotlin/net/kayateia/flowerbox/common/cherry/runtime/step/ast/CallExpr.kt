@@ -17,34 +17,48 @@ object CallExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstCallExpr -> {
 			val func = Step.exec(runtime, node.left)?.value
-			if (func !is FuncValue)
-				throw Exception("can't execute a non-function (${func})")
-
-			val argVals = node.args.map {
-				Step.exec(runtime, it).rvalue
-			}
-
-			val paramScope = MapScope(func.capturedScope)
-			paramScope.set("arguments", ArrayValue(argVals))
-
-			// TODO: This is not quite right, because it will leave unused parameters unset.
-			val zipped = func.funcNode.params.zip(node.args)
-			zipped.forEach {
-				val argValue = Step.exec(runtime, it.second)
-				paramScope.set(it.first, argValue.value)
-			}
-
-			runtime.scopePush(paramScope)
-
-			val rv = Step.exec(runtime, func.funcNode.body)
-
-			runtime.scopePop(paramScope)
-
-			when (rv) {
-				is ReturnValue -> rv.returnValue.rvalue
-				else -> rv.rvalue
+			when (func) {
+				is FuncValue -> executeCherry(runtime, node, func)
+				is IntrinsicValue -> executeNative(runtime, node, func)
+				else -> throw Exception("can't execute a non-function (${func})")
 			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
+	}
+
+	private suspend fun getArgs(runtime: Runtime, node: AstCallExpr): ArrayValue {
+		return ArrayValue(node.args.map {
+			Step.exec(runtime, it).rvalue
+		})
+	}
+
+	private suspend fun executeCherry(runtime: Runtime, node: AstCallExpr, func: FuncValue): Value {
+		val args = getArgs(runtime, node)
+		val paramScope = MapScope(func.capturedScope)
+		paramScope.setLocal("arguments", args)
+
+		val zipped = func.funcNode.params.zip(args.arrayValue)
+		zipped.forEach {
+			paramScope.setLocal(it.first, it.second)
+		}
+		func.funcNode.params.forEach {
+			if (!paramScope.hasLocal(it))
+				paramScope.setLocal(it, NullValue())
+		}
+
+		runtime.scopePush(paramScope)
+
+		val rv = Step.exec(runtime, func.funcNode.body)
+
+		runtime.scopePop(paramScope)
+
+		return when (rv) {
+			is ReturnValue -> rv.returnValue.rvalue
+			else -> rv.rvalue
+		}
+	}
+
+	private suspend fun executeNative(runtime: Runtime, node: AstCallExpr, func: IntrinsicValue): Value {
+		return func.delegate(getArgs(runtime, node))
 	}
 }

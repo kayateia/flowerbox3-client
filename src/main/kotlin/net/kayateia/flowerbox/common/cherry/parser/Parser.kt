@@ -73,10 +73,11 @@ var m = 0;
 for (var l=0; l<10; l++) {
 	m = m + 10;
 }
+var p = testfunc();
 
 			""")
 			val runtime = Runtime(ast)
-			val rv = runtime.execute()
+			val rv = runtime.execute(10000)
 			println("$runtime")
 			// println("${runtime.completed} ${runtime.result} ${rv}")
 		}

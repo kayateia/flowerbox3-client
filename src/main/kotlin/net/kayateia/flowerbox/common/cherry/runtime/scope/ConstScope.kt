@@ -15,5 +15,5 @@ open class ConstScope(override val parent: Scope? = null) : MapScope(parent) {
 		/* should throw an error here */
 	}
 
-	fun setConstant(name: String, value: Any?) = super.set(name, value)
+	fun setConstant(name: String, value: Any?) = super.setLocal(name, value)
 }
