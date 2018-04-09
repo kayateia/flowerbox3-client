@@ -8,10 +8,7 @@
 package net.kayateia.flowerbox.common.cherry.runtime.step
 
 import net.kayateia.flowerbox.common.cherry.parser.*
-import net.kayateia.flowerbox.common.cherry.runtime.NullValue
-import net.kayateia.flowerbox.common.cherry.runtime.RValue
-import net.kayateia.flowerbox.common.cherry.runtime.Runtime
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.ast.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.helper.NoOp
 
@@ -27,11 +24,13 @@ interface Step {
 			is AstEmptyStmt				-> NoOp
 			is AstExprStmt				-> ExprStmt
 			is AstIfStmt				-> IfStmt
+			is AstReturnStmt			-> ReturnStmt
 
 			is AstVarDecl				-> VarDecl
 
-			//is AstFuncExpr				-> FuncExpr
+			is AstFuncExpr				-> FuncExpr
 			//is AstIndexExpr				-> IndexExpr
+			is AstCallExpr				-> CallExpr
 			//is AstPostExpr				-> PostExpr
 			//is AstPreExpr				-> PreExpr
 			is AstUnaryExpr				-> UnaryExpr
@@ -55,9 +54,11 @@ interface Step {
 
 		suspend fun execList(runtime: Runtime, items: List<AstNode>): Value {
 			var last: Value? = null
-			items.forEach {
-				last = toStep(it).execute(runtime, it)
+			for (item in items) {
+				last = toStep(item).execute(runtime, item)
 				runtime.stepAdd()
+				if (last is ReturnValue)
+					break
 			}
 			return last ?: NullValue()
 		}

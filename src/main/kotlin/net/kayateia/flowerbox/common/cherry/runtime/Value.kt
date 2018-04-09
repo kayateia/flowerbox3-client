@@ -1,9 +1,13 @@
 package net.kayateia.flowerbox.common.cherry.runtime
 
+import net.kayateia.flowerbox.common.cherry.parser.AstFuncDecl
+import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
 interface Value {
 	var value: Any?
+	val rvalue: RValue
+		get() = RValue(value)
 }
 
 interface LValue : Value
@@ -12,10 +16,23 @@ class ScopeLValue(val scope: Scope, val name: String) : LValue {
 	override var value: Any?
 		get() = scope.get(name)
 		set(value) {
-			scope.set(name, value)
+			scope.set(name, when (value) {
+				is Value -> value.rvalue
+				else -> RValue(value)
+			})
 		}
 
 	override fun toString(): String = "LValue(${name})"
+}
+
+class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
+	override var value: Any?
+		get() = throw Exception("can't use function value as RValue")
+		set(value) {
+			throw Exception("can't assign into a function value")
+		}
+
+	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params.fold("", {a,b -> "$a,$b"})})"
 }
 
 class RValue(val constValue: Any?) : Value {
@@ -35,4 +52,24 @@ class NullValue : Value {
 		}
 
 	override fun toString(): String = "RValue(null)"
+}
+
+class ArrayValue(val arrayValue: List<RValue>) : Value {
+	override var value: Any?
+		get() = throw Exception("can't use array value as RValue")
+		set(value) {
+			throw Exception("can't assign into an array value")
+		}
+
+	override fun toString(): String = "ArrayValue(${arrayValue.fold("", {a,b -> "$a,$b"})})"
+}
+
+interface FlowControlValue : Value
+
+class ReturnValue(val returnValue: Value) : FlowControlValue {
+	override var value: Any?
+		get() = returnValue
+		set(value) {
+			throw Exception("can't assign into a return value")
+		}
 }

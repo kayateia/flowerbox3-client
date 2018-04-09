@@ -62,7 +62,7 @@ interface AstBinary : AstAry {
 data class AstFuncExpr(val id: String?, val params: List<String>, val body: AstBlock) : AstExpr
 data class AstIndexExpr(val left: AstExpr, val index: List<AstExpr>) : AstExpr
 data class AstDotExpr(val left: AstExpr, val member: String) : AstExpr
-data class AstArgExpr(val left: AstExpr, val args: List<AstExpr>) : AstExpr
+data class AstCallExpr(val left: AstExpr, val args: List<AstExpr>) : AstExpr
 data class AstNewExpr(val left: AstExpr, val args: List<AstExpr>) : AstExpr
 data class AstPostExpr(override val op: String, override val expr: AstExpr) : AstUnary
 data class AstDeleteExpr(val expr: AstExpr) : AstExpr

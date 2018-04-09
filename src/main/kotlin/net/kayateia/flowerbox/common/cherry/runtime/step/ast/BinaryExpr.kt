@@ -26,13 +26,14 @@ object BinaryExpr : Step {
 		"*" -> RValue(Coercion.toNum(left.value) * Coercion.toNum(right.value))
 		"/" -> RValue(Coercion.toNum(left.value) / Coercion.toNum(right.value))
 		"%" -> RValue(Coercion.toNum(left.value) % Coercion.toNum(right.value))
-		"+" -> RValue(Coercion.toNum(left.value) + Coercion.toNum(right.value)) // TODO - strings
+		"+" -> RValue(Coercion.toNum(left.value) + Coercion.toNum(right.value))	// TODO - strings
 		"-" -> RValue(Coercion.toNum(left.value) - Coercion.toNum(right.value))
+		"==" -> RValue(Coercion.toBool(left.value == right.value))					// TODO - non-Kotlin semantics
 		"=" -> {
 			when (left) {
 				is LValue -> {
 					left.value = right.value
-					RValue(right.value)
+					right.rvalue
 				}
 				else -> throw Exception("can't assign to RValue")
 			}

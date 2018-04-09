@@ -67,7 +67,15 @@ class Runtime(val program: AstProgram) {
 	}
 
 	fun scopePush(scope: Scope = MapScope(scopeStack.top)): Scope = scopeStack.push(scope)
-	fun scopePop(): Scope = scopeStack.pop()
+	fun scopePop(scope: Scope? = null): Scope =
+		if (scope != null) {
+			val popped = scopeStack.pop()
+			if (popped !== scope)
+				throw Exception("scope stack push/pop mismatch")
+			else
+				popped
+		} else
+			scopeStack.pop()
 	val scope: Scope get() = scopeStack.top
 
 	suspend fun stepAdd() {

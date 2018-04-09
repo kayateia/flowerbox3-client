@@ -62,7 +62,7 @@ fun SingleExpressionContext.toAst(): AstExpr = when(this) {
 	is FunctionExpressionContext			-> AstFuncExpr(Identifier()?.text, formalParameterList().toAst(), AstBlock(functionBody().sourceElements().toAst()))
 	is MemberIndexExpressionContext			-> AstIndexExpr(singleExpression().toAst(), expressionSequence().toAst())
 	is MemberDotExpressionContext			-> AstDotExpr(singleExpression().toAst(), identifierName().text)
-	is ArgumentsExpressionContext			-> AstArgExpr(singleExpression().toAst(), arguments().toAst())
+	is ArgumentsExpressionContext			-> AstCallExpr(singleExpression().toAst(), arguments().toAst())
 	is NewExpressionContext					-> AstNewExpr(singleExpression().toAst(), arguments().toAst())
 	is PostIncrementExpressionContext		-> AstPostExpr(getChild(1).text, singleExpression().toAst())
 	is PostDecreaseExpressionContext		-> AstPostExpr(getChild(1).text, singleExpression().toAst())

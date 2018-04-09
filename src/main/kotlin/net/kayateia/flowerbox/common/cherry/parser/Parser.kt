@@ -55,8 +55,19 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("""
+function factorial(n) {
+	if (n == 0)
+		return 1;
+	else
+		return n * factorial(n-1);
+}
+function test(n) {
+	return n + 3
+}
+var j = test(2);
+var k = factorial(4);
 				var i = (5 * 10 + 5) - 20;
-				i = i + 1
+				i = i + 1;
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute()
