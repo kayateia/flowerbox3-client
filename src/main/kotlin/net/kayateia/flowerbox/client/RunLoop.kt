@@ -28,7 +28,9 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.*
 import org.lwjgl.glfw.Callbacks.*
+import org.lwjgl.glfw.GLFWCursorPosCallback
 import org.lwjgl.glfw.GLFWKeyCallback
+import org.lwjgl.glfw.GLFWMouseButtonCallback
 import org.lwjgl.system.MemoryUtil.*
 
 class RunLoop {
@@ -73,13 +75,23 @@ class RunLoop {
 				keyHandler(window, key, scancode, action, mods)
 			}
 		})
+		glfwSetMouseButtonCallback(window, object : GLFWMouseButtonCallback() {
+			override fun invoke(window: Long, button: Int, action: Int, mods: Int) {
+				mouseHandler(window, button, action, mods)
+			}
+		})
+		glfwSetCursorPosCallback(window, object : GLFWCursorPosCallback() {
+			override fun invoke(window: Long, xpos: Double, ypos: Double) {
+				cursorHandler(window, xpos, ypos)
+			}
+		})
 
 		val vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor())
 
 		glfwSetWindowPos (
-				window,
-				(vidMode.width() -  WIDTH) / 2,
-				(vidMode.height() - HEIGHT) / 2
+			window,
+			(vidMode.width() -  WIDTH) / 2,
+			(vidMode.height() - HEIGHT) / 2
 		)
 
 		glfwMakeContextCurrent(window)
@@ -102,19 +114,57 @@ class RunLoop {
 	}
 
 	fun keyHandler(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
+		println("key: $window, $key, $scanCode, $action, $mods")
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
 			glfwSetWindowShouldClose(window, true)
-		if (key == GLFW_KEY_LEFT) {
-			if (action == GLFW_PRESS)
+		/*if (key == GLFW_KEY_LEFT) {
+			if (action == GLFW_PRESS || action == GLFW_REPEAT)
 				Renderer.setRotate(-1f)
 			else
 				Renderer.setRotate(0f)
 		}
 		if (key == GLFW_KEY_RIGHT) {
-			if (action == GLFW_PRESS)
+			if (action == GLFW_PRESS || action == GLFW_REPEAT)
 				Renderer.setRotate(1f)
 			else
 				Renderer.setRotate(0f)
+		} */
+	}
+
+	private var mouseDown = false
+	private var mouseDownX: Double = 0.0
+	private var mouseDownY: Double = 0.0
+	private var xrotDown: Float = 0f
+	private var yrotDown: Float = 0f
+	private var lastX: Double = 0.0
+	private var lastY: Double = 0.0
+
+	fun mouseHandler(window: Long, button: Int, action: Int, mods: Int) {
+		println("mouse: $window, $button, $action, $mods")
+		if (button == GLFW_MOUSE_BUTTON_1) {
+			mouseDown = action == 1
+			mouseDownX = lastX
+			mouseDownY = lastY
+			xrotDown = Renderer.xrot
+			yrotDown = Renderer.yrot
 		}
+	}
+
+	fun cursorHandler(window: Long, xpos: Double, ypos: Double) {
+		lastX = xpos
+		lastY = ypos
+
+		if (mouseDown) {
+			val deltaX = xpos - mouseDownX
+			val deltaY = ypos - mouseDownY
+			println("cursorDelta: $deltaX, $deltaY")
+
+			Renderer.yrot = yrotDown - (deltaX / 4.0).toFloat()
+			Renderer.xrot = xrotDown - (deltaY / 4.0).toFloat()
+		}
+
+		/*if (xpos < 0 || ypos < 0 || xpos >= WIDTH || ypos >= HEIGHT)
+			return
+		println("cursor: $window, $xpos, $ypos") */
 	}
 }

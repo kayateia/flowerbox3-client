@@ -20,7 +20,8 @@ object Textures {
 				"grass_top3.png",
 				"dirt.png",
 				"grass_side_snowed.png",
-				"snow.png"
+				"snow.png",
+				"water.png"
 			).map({ p: String -> pathRoot + p })
 		)
 	}
@@ -32,4 +33,8 @@ object Textures {
 	const val dirt = 4
 	const val grassSnowedSide = 5
 	const val snowTop = 6
+	const val water = 7
+
+	val aoTxr: SingleTexture = SingleTexture("./textures/aotxrs.png")
+	// val sdTxr: SingleTexture = SingleTexture("./textures/sidetxrs.png")
 }

@@ -33,7 +33,9 @@ object Renderer {
 		height = h
 
 		// Pull this once during the setup to make sure it gets loaded.
-		println("Atlas ID is " + Textures.atlas.glTextureId)
+		println("Atlas ID is ${Textures.atlas.glTextureId}")
+		println("AO txr ID is ${Textures.aoTxr.glTextureId}")
+		// println("SD txr ID is ${Textures.sdTxr.glTextureId}")
 
 		setupMatrices()
 		setupShaders()
@@ -91,6 +93,9 @@ object Renderer {
 	private var lightColorLocation: Int = 0
 	private var lightPositionLocation: Int = 0
 	private var ambientLocation: Int = 0
+	private var diffuseTxrLocation: Int = 0
+	private var aoTxrLocation: Int = 0
+	// private var sdTxrLocation: Int = 0
 
 	private fun setupShaders() {
 		// Create a new shader program that links both shaders
@@ -110,6 +115,9 @@ object Renderer {
 		glBindAttribLocation(pId, 1, "in_Normal")
 		// Texture information will be attribute 2
 		glBindAttribLocation(pId, 2, "in_TextureCoord")
+		// AO Texture information will be attribute 3
+		glBindAttribLocation(pId, 3, "in_AoTextureCoord")
+		// glBindAttribLocation(pId, 4, "in_sdTextureCoord")
 
 		glLinkProgram(pId)
 		val result = IntArray(1)
@@ -125,16 +133,28 @@ object Renderer {
 		viewMatrixLocation = glGetUniformLocation(pId, "viewMatrix")
 		modelMatrixLocation = glGetUniformLocation(pId, "modelMatrix")
 
+		// Get texture locations.
+		diffuseTxrLocation = glGetUniformLocation(pId, "diffuseTexture")
+		aoTxrLocation = glGetUniformLocation(pId, "aoTexture")
+		// sdTxrLocation = glGetUniformLocation(pId, "sdTexture")
+
 		// Get other parameter locations.
 		lightColorLocation = glGetUniformLocation(pId, "lightColor")
 		lightPositionLocation = glGetUniformLocation(pId, "lightPos")
 		ambientLocation = glGetUniformLocation(pId, "ambientStrength")
 
-		// Set some default lighting.
 		glUseProgram(pId)
+
+		// Set some default lighting.
 		glUniform3f(lightColorLocation, 0.5f, 0.5f, 0.5f)
 		glUniform3f(lightPositionLocation, 15f, 30f, 15f)
 		glUniform1f(ambientLocation, 0.7f)
+
+		// And textures.
+		glUniform1i(diffuseTxrLocation, 0)
+		glUniform1i(aoTxrLocation, 1)
+		// glUniform1i(sdTxrLocation, 2)
+
 		glUseProgram(0)
 
 		// this.exitOnGLError("setupShaders");
@@ -147,12 +167,8 @@ object Renderer {
 	}
 
 	// Camera rotation and delta rotation (for movement).
-	private var rot = 0.0f
-	private var drot = 0.0f
-
-	fun setRotate(d: Float) {
-		drot = d
-	}
+	var xrot = 0.0f
+	var yrot = 0.0f
 
 	fun render() {
 		glViewport(0, 0, width, height)
@@ -167,10 +183,15 @@ object Renderer {
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 		viewMatrix.setIdentity()
-		viewMatrix.rotate(degreesToRadians(20f), Vector3f(1f, 0f, 0f))
+		viewMatrix.rotate(degreesToRadians(xrot), Vector3f(1f, 0f, 0f))
+		viewMatrix.rotate(degreesToRadians(yrot), Vector3f(0f, 1f, 0f))
 		viewMatrix.translate(Vector3f(0f, -10f, -50f))
-		viewMatrix.rotate(degreesToRadians(rot), Vector3f(0f, 1f, 0f))
 		viewMatrix.translate(Vector3f(-16f/2, 0f, -16f/2))
+		/*viewMatrix.rotate(degreesToRadians(20f), Vector3f(1f, 0f, 0f))
+		viewMatrix.translate(Vector3f(0f, -10f, -50f))
+		viewMatrix.rotate(degreesToRadians(yrot), Vector3f(0f, 1f, 0f))
+		viewMatrix.rotate(degreesToRadians(xrot), Vector3f(1f, 0f, 0f))
+		viewMatrix.translate(Vector3f(-16f/2, 0f, -16f/2)) */
 
 		glEnable(GL_TEXTURE_2D)
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
@@ -187,7 +208,7 @@ object Renderer {
 
 		glUseProgram(0)
 
-		rot = (rot + drot) % 360
+		// rot = (rot + drot) % 360
 
 		var chunkToRender: Chunk? = null
 		synchronized(chunkRenderQueue) {

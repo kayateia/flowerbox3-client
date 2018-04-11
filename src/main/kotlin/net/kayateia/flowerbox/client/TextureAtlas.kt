@@ -16,13 +16,42 @@ import slim.texture.io.PNGDecoder
 import kotlin.coroutines.experimental.buildSequence
 
 
-data class TextureCoord(val s1: Float, val t1: Float, val s2: Float, val t2: Float)
+class TextureCoord(val s: Float, val t: Float)
+
+interface TextureQuad {
+	val ul: TextureCoord
+	val ur: TextureCoord
+	val ll: TextureCoord
+	val lr: TextureCoord
+}
+
+class Texture2c(val uls: Float, val ult: Float, val lrs: Float, val lrt: Float) : TextureQuad {
+	override val ul: TextureCoord
+		get() = TextureCoord(uls, ult)
+	override val ur: TextureCoord
+		get() = TextureCoord(lrs, ult)
+	override val ll: TextureCoord
+		get() = TextureCoord(uls, lrt)
+	override val lr: TextureCoord
+		get() = TextureCoord(lrs, lrt)
+}
+
+class Texture4c(val ulIn: TextureCoord, val llIn: TextureCoord, val lrIn: TextureCoord, val urIn: TextureCoord) : TextureQuad {
+	override val ul: TextureCoord
+		get() = ulIn
+	override val ll: TextureCoord
+		get() = llIn
+	override val lr: TextureCoord
+		get() = lrIn
+	override val ur: TextureCoord
+		get() = urIn
+}
 
 class TextureAtlas(val eachTxrSize: Int) {
 	private val queuedImages = ArrayList<String>()
 	private var glTxrId = 0
 	private var bigTxrSize = 0
-	private var coords: Array<TextureCoord> = arrayOf()
+	private var coords: Array<TextureQuad> = arrayOf()
 
 	fun load(filenames: List<String>) {
 		queuedImages.addAll(filenames)
@@ -31,7 +60,7 @@ class TextureAtlas(val eachTxrSize: Int) {
 	val glTextureId: Int
 		get() = if (glTxrId != 0) glTxrId else genTextureId()
 
-	fun coordsOf(index: Int): TextureCoord = coords[index]
+	fun coordsOf(index: Int): TextureQuad = coords[index]
 
 	private fun genTextureId(): Int {
 		bigTxrSize = txrSize
@@ -49,7 +78,7 @@ class TextureAtlas(val eachTxrSize: Int) {
 		coords = buildSequence {
 			for (y in 0 until txrPerRow) {
 				for (x in 0 until txrPerRow) {
-					yield(TextureCoord(
+					yield(Texture2c(
 						(1f * x * eachTxrSize) / bigTxrSize,
 						(1f * y * eachTxrSize) / bigTxrSize,
 						((1f * x * eachTxrSize) + (eachTxrSize-1)) / bigTxrSize,

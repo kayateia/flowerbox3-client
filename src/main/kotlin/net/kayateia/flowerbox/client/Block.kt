@@ -9,12 +9,12 @@ package net.kayateia.flowerbox.client
 
 import net.kayateia.flowerbox.common.collections.pickRandom
 
-data class TextureSet(val top: TextureCoord,
-						val bottom: TextureCoord,
-						val left: TextureCoord,
-						val right: TextureCoord,
-						val front: TextureCoord,
-						val back: TextureCoord)
+data class TextureSet(val top: TextureQuad,
+						val bottom: TextureQuad,
+						val left: TextureQuad,
+						val right: TextureQuad,
+						val front: TextureQuad,
+						val back: TextureQuad)
 
 object TextureSets {
 	private val atlas by lazy { Textures.atlas }
@@ -68,6 +68,17 @@ object TextureSets {
 				back = dirtTxr
 		)
 	}
+
+	val water: TextureSet by lazy {
+		val waterTxr = atlas.coordsOf(Textures.water)
+		TextureSet(top = waterTxr,
+			bottom = waterTxr,
+			left = waterTxr,
+			right = waterTxr,
+			front = waterTxr,
+			back = waterTxr
+		)
+	}
 }
 
 class Block(val blockType: Int) {
@@ -76,17 +87,19 @@ class Block(val blockType: Int) {
 		const val grass: Int = 1
 		const val dirt: Int = 2
 		const val snow: Int = 3
+		const val water: Int = 4
 
 		private val textureSets: Array<TextureSet?> get() = arrayOf(
 			null,
 			listOf(TextureSets.grass1, TextureSets.grass2, TextureSets.grass3).pickRandom(),
 			TextureSets.dirt,
-			TextureSets.snow
+			TextureSets.snow,
+			TextureSets.water
 		)
 	}
 
 	val textureSet: TextureSet? by lazy {
-		if (blockType <= 3)
+		if (blockType <= 4)
 			textureSets[blockType]
 		else
 			null
