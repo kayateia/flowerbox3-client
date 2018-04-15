@@ -166,9 +166,19 @@ object Renderer {
 		glUniformMatrix4fv(modelMatrixLocation, false, matrix44buffer)
 	}
 
-	// Camera rotation and delta rotation (for movement).
+	// Camera rotation and position+delta position.
 	var xrot = 0.0f
 	var yrot = 0.0f
+	var pos = Vector3f(16.0f/2.0f, 10f, 16.0f/2.0f)
+	var moveVector = Vector3f(0f, 0f, 0f)
+
+	private fun move() {
+		val yr = degreesToRadians(yrot).toDouble()
+		val xr = degreesToRadians(xrot).toDouble()
+		pos.x += Math.sin(yr).toFloat() * moveVector.z - Math.cos(yr).toFloat() * moveVector.x
+		pos.y -= Math.sin(xr).toFloat() * moveVector.z / 2f + moveVector.y
+		pos.z -= Math.cos(yr).toFloat() * moveVector.z + Math.sin(yr).toFloat() * moveVector.x
+	}
 
 	fun render() {
 		glViewport(0, 0, width, height)
@@ -182,11 +192,13 @@ object Renderer {
 		//glEnable(GL_BLEND)
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+		move()
+
 		viewMatrix.setIdentity()
 		viewMatrix.rotate(degreesToRadians(xrot), Vector3f(1f, 0f, 0f))
 		viewMatrix.rotate(degreesToRadians(yrot), Vector3f(0f, 1f, 0f))
 		viewMatrix.translate(Vector3f(0f, -10f, -50f))
-		viewMatrix.translate(Vector3f(-16f/2, 0f, -16f/2))
+		viewMatrix.translate(pos)
 		/*viewMatrix.rotate(degreesToRadians(20f), Vector3f(1f, 0f, 0f))
 		viewMatrix.translate(Vector3f(0f, -10f, -50f))
 		viewMatrix.rotate(degreesToRadians(yrot), Vector3f(0f, 1f, 0f))

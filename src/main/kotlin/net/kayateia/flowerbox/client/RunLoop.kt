@@ -117,18 +117,26 @@ class RunLoop {
 		println("key: $window, $key, $scanCode, $action, $mods")
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
 			glfwSetWindowShouldClose(window, true)
-		/*if (key == GLFW_KEY_LEFT) {
-			if (action == GLFW_PRESS || action == GLFW_REPEAT)
-				Renderer.setRotate(-1f)
-			else
-				Renderer.setRotate(0f)
+		if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+			when (key) {
+				GLFW_KEY_UP, GLFW_KEY_W		-> Renderer.moveVector.z = -1f
+				GLFW_KEY_DOWN, GLFW_KEY_S	-> Renderer.moveVector.z = 1f
+				GLFW_KEY_LEFT, GLFW_KEY_A	-> Renderer.moveVector.x = -1f
+				GLFW_KEY_RIGHT, GLFW_KEY_D	-> Renderer.moveVector.x = 1f
+				GLFW_KEY_SPACE				-> Renderer.moveVector.y = 1f
+				GLFW_KEY_LEFT_SHIFT			-> Renderer.moveVector.y = -1f
+			}
 		}
-		if (key == GLFW_KEY_RIGHT) {
-			if (action == GLFW_PRESS || action == GLFW_REPEAT)
-				Renderer.setRotate(1f)
-			else
-				Renderer.setRotate(0f)
-		} */
+		if (action == GLFW_RELEASE) {
+			when (key) {
+				GLFW_KEY_UP, GLFW_KEY_W		-> Renderer.moveVector.z = 0f
+				GLFW_KEY_DOWN, GLFW_KEY_S	-> Renderer.moveVector.z = 0f
+				GLFW_KEY_LEFT, GLFW_KEY_A	-> Renderer.moveVector.x = 0f
+				GLFW_KEY_RIGHT, GLFW_KEY_D	-> Renderer.moveVector.x = 0f
+				GLFW_KEY_SPACE				-> Renderer.moveVector.y = 0f
+				GLFW_KEY_LEFT_SHIFT			-> Renderer.moveVector.y = 0f
+			}
+		}
 	}
 
 	private var mouseDown = false
@@ -157,14 +165,9 @@ class RunLoop {
 		if (mouseDown) {
 			val deltaX = xpos - mouseDownX
 			val deltaY = ypos - mouseDownY
-			println("cursorDelta: $deltaX, $deltaY")
 
 			Renderer.yrot = yrotDown - (deltaX / 4.0).toFloat()
 			Renderer.xrot = xrotDown - (deltaY / 4.0).toFloat()
 		}
-
-		/*if (xpos < 0 || ypos < 0 || xpos >= WIDTH || ypos >= HEIGHT)
-			return
-		println("cursor: $window, $xpos, $ypos") */
 	}
 }
