@@ -7,43 +7,54 @@
 
 package net.kayateia.flowerbox.common.cherry.parser
 
+import org.antlr.v4.runtime.Token
+
+// Line number and column information stored from each AST element.
+data class AstLoc(val line: Int, val col: Int) {
+	companion object {
+		fun from(token: Token): AstLoc = AstLoc(token.line, token.charPositionInLine)
+	}
+}
+
 // Root interface for all AST nodes
-interface AstNode
+interface AstNode {
+	val loc: AstLoc
+}
 
 // Overall program container
-data class AstProgram(val stmts: List<AstStatement>) : AstNode
+data class AstProgram(override val loc: AstLoc, val stmts: List<AstStatement>) : AstNode
 
 // Statements
 interface AstStatement : AstNode
-data class AstFuncDecl(val func: AstFuncExpr) : AstStatement
-data class AstBlock(val stmts: List<AstStatement>) : AstStatement
-data class AstVarStmt(val decls: List<AstVarDecl>) : AstStatement
-data class AstEmptyStmt(val mkh: Boolean = true) : AstStatement
-data class AstExprStmt(val exprs: List<AstExpr>) : AstStatement
-data class AstIfStmt(val exprs: List<AstExpr>,
-					 val ifTrue: AstStatement, val ifElse: AstStatement) : AstStatement
-data class AstDoWhileStmt(val stmt: AstStatement, val exprs: List<AstExpr>) : AstStatement
-data class AstWhileStmt(val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstForSeq(val init: List<AstExpr>, val cond: List<AstExpr>,
-					 val next: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstForVarSeq(val decls: List<AstVarDecl>, val cond: List<AstExpr>,
+data class AstFuncDecl(override val loc: AstLoc, val func: AstFuncExpr) : AstStatement
+data class AstBlock(override val loc: AstLoc, val stmts: List<AstStatement>) : AstStatement
+data class AstVarStmt(override val loc: AstLoc, val decls: List<AstVarDecl>) : AstStatement
+data class AstEmptyStmt(override val loc: AstLoc) : AstStatement
+data class AstExprStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : AstStatement
+data class AstIfStmt(override val loc: AstLoc, val exprs: List<AstExpr>,
+				val ifTrue: AstStatement, val ifElse: AstStatement) : AstStatement
+data class AstDoWhileStmt(override val loc: AstLoc, val stmt: AstStatement, val exprs: List<AstExpr>) : AstStatement
+data class AstWhileStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstForSeq(override val loc: AstLoc, val init: List<AstExpr>, val cond: List<AstExpr>,
+				val next: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstForVarSeq(override val loc: AstLoc, val decls: List<AstVarDecl>, val cond: List<AstExpr>,
 						val next: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstForIn(val variable: AstExpr, val seq: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstForVarIn(val decl: AstVarDecl, val seq: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstContinueStmt(val mkh: Boolean = true) : AstStatement
-data class AstBreakStmt(val mkh: Boolean = true) : AstStatement
-data class AstReturnStmt(val exprs: List<AstExpr>) : AstStatement
-data class AstWithStmt(val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstSwitchStmt(val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
-data class AstThrowStmt(val exprs: List<AstExpr>) : AstStatement
-data class AstTryStmt(val block: AstBlock, val catches: List<AstCatch>, val finally: AstFinally) : AstStatement
+data class AstForIn(override val loc: AstLoc, val variable: AstExpr, val seq: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstForVarIn(override val loc: AstLoc, val decl: AstVarDecl, val seq: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstContinueStmt(override val loc: AstLoc) : AstStatement
+data class AstBreakStmt(override val loc: AstLoc) : AstStatement
+data class AstReturnStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : AstStatement
+data class AstWithStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstSwitchStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
+data class AstThrowStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : AstStatement
+data class AstTryStmt(override val loc: AstLoc, val block: AstBlock, val catches: List<AstCatch>, val finally: AstFinally) : AstStatement
 
 // Try/catch/finally
-data class AstCatch(val id: String, val block: AstBlock) : AstNode
-data class AstFinally(val block: AstBlock) : AstNode
+data class AstCatch(override val loc: AstLoc, val id: String, val block: AstBlock) : AstNode
+data class AstFinally(override val loc: AstLoc, val block: AstBlock) : AstNode
 
 // Variable declarations
-data class AstVarDecl(val id: String, val init: AstExpr?) : AstNode
+data class AstVarDecl(override val loc: AstLoc, val id: String, val init: AstExpr?) : AstNode
 
 // Expression Types
 interface AstExpr : AstNode
@@ -59,29 +70,29 @@ interface AstBinary : AstAry {
 }
 
 // Concrete expressions
-data class AstFuncExpr(val id: String?, val params: List<String>, val body: AstBlock) : AstExpr
-data class AstIndexExpr(val left: AstExpr, val index: List<AstExpr>) : AstExpr
-data class AstDotExpr(val left: AstExpr, val member: String) : AstExpr
-data class AstCallExpr(val left: AstExpr, val args: List<AstExpr>) : AstExpr
-data class AstNewExpr(val left: AstExpr, val args: List<AstExpr>) : AstExpr
-data class AstPostExpr(override val op: String, override val expr: AstExpr) : AstUnary
-data class AstDeleteExpr(val expr: AstExpr) : AstExpr
-data class AstVoidExpr(val expr: AstExpr) : AstExpr
-data class AstTypeofExpr(val expr: AstExpr) : AstExpr
-data class AstPreExpr(override val op: String, override val expr: AstExpr) : AstUnary
-data class AstUnaryExpr(override val op: String, override val expr: AstExpr) : AstUnary
-data class AstBinaryExpr(override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
-data class AstLazyBinaryExpr(override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
-data class AstTernaryExpr(val cond: AstExpr, val ifTrue: AstExpr, val ifFalse: AstExpr) : AstExpr
-data class AstThisExpr(val mkh: Boolean = true) : AstExpr
-data class AstIdExpr(val id: String) : AstExpr
-data class AstLiteralExpr(val value: Any?) : AstExpr
-data class AstArrayExpr(val contents: List<AstExpr>) : AstExpr
-data class AstObjectExpr(val value: Map<Any, AstObjectProperty>) : AstExpr
-data class AstExprListExpr(val exprs: List<AstExpr>) : AstExpr
+data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: List<String>, val body: AstBlock) : AstExpr
+data class AstIndexExpr(override val loc: AstLoc, val left: AstExpr, val index: List<AstExpr>) : AstExpr
+data class AstDotExpr(override val loc: AstLoc, val left: AstExpr, val member: String) : AstExpr
+data class AstCallExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr
+data class AstNewExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr
+data class AstPostExpr(override val loc: AstLoc, override val op: String, override val expr: AstExpr) : AstUnary
+data class AstDeleteExpr(override val loc: AstLoc, val expr: AstExpr) : AstExpr
+data class AstVoidExpr(override val loc: AstLoc, val expr: AstExpr) : AstExpr
+data class AstTypeofExpr(override val loc: AstLoc, val expr: AstExpr) : AstExpr
+data class AstPreExpr(override val loc: AstLoc, override val op: String, override val expr: AstExpr) : AstUnary
+data class AstUnaryExpr(override val loc: AstLoc, override val op: String, override val expr: AstExpr) : AstUnary
+data class AstBinaryExpr(override val loc: AstLoc, override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
+data class AstLazyBinaryExpr(override val loc: AstLoc, override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
+data class AstTernaryExpr(override val loc: AstLoc, val cond: AstExpr, val ifTrue: AstExpr, val ifFalse: AstExpr) : AstExpr
+data class AstThisExpr(override val loc: AstLoc) : AstExpr
+data class AstIdExpr(override val loc: AstLoc, val id: String) : AstExpr
+data class AstLiteralExpr(override val loc: AstLoc, val value: Any?) : AstExpr
+data class AstArrayExpr(override val loc: AstLoc, val contents: List<AstExpr>) : AstExpr
+data class AstObjectExpr(override val loc: AstLoc, val value: Map<Any, AstObjectProperty>) : AstExpr
+data class AstExprListExpr(override val loc: AstLoc, val exprs: List<AstExpr>) : AstExpr
 
 // Object definition
 interface AstObjectProperty : AstNode
-data class AstObjectAssignment(val name: Any, val value: AstExpr) : AstObjectProperty
-data class AstObjectGetter(val name: String, val block: AstBlock) : AstObjectProperty
-data class AstObjectSetter(val name: String, val param: String, val block: AstBlock) : AstObjectProperty
+data class AstObjectAssignment(override val loc: AstLoc, val name: Any, val value: AstExpr) : AstObjectProperty
+data class AstObjectGetter(override val loc: AstLoc, val name: String, val block: AstBlock) : AstObjectProperty
+data class AstObjectSetter(override val loc: AstLoc, val name: String, val param: String, val block: AstBlock) : AstObjectProperty
