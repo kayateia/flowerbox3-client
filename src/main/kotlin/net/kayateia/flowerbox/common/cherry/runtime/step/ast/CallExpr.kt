@@ -17,10 +17,12 @@ object CallExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstCallExpr -> {
 			val func = Step.exec(runtime, node.left)?.value
-			when (func) {
-				is FuncValue -> executeCherry(runtime, node, func)
-				is IntrinsicValue -> executeNative(runtime, node, func)
-				else -> throw Exception("can't execute a non-function (${func})")
+			runtime.lexicalPush(node).use {
+				when (func) {
+					is FuncValue -> executeCherry(runtime, node, func)
+					is IntrinsicValue -> executeNative(runtime, node, func)
+					else -> throw Exception("can't execute a non-function (${func})")
+				}
 			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
@@ -46,15 +48,12 @@ object CallExpr : Step {
 				paramScope.setLocal(it, NullValue())
 		}
 
-		runtime.scopePush(paramScope)
-
-		val rv = Step.exec(runtime, func.funcNode.body)
-
-		runtime.scopePop(paramScope)
-
-		return when (rv) {
-			is ReturnValue -> rv.returnValue.rvalue
-			else -> rv.rvalue
+		runtime.scopePush(paramScope).use {
+			val rv = Step.exec(runtime, func.funcNode.body)
+			return when (rv) {
+				is ReturnValue -> rv.returnValue.rvalue
+				else -> rv.rvalue
+			}
 		}
 	}
 

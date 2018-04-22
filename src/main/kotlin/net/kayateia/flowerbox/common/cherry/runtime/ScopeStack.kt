@@ -28,7 +28,12 @@ class ScopeStack {
 	val top: Scope get() = stack.peek()
 
 	override fun toString(): String =
-		"Scope Stack:\n" +
-		stack.map { "   ${it} (${it.javaClass.canonicalName})" }
-			.fold("", { acc, s -> acc + "\n" + s })
+		stack.map { "   ${it} (${it.javaClass.simpleName})" }
+			.fold("Scope Stack:", { acc, s -> acc + "\n" + s })
+}
+
+class ScopeStackToken(val runtime: Runtime, val scope: Scope) : AutoCloseable {
+	override fun close() {
+		runtime.scopePop(scope)
+	}
 }

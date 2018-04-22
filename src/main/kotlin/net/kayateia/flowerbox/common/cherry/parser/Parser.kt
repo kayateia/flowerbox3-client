@@ -16,6 +16,8 @@ import org.antlr.v4.runtime.dfa.DFA
 import java.util.*
 
 class Parser {
+	private val functionStack = Stack<AstFuncExpr>()
+
 	private val errorListener = object : ANTLRErrorListener {
 		override fun syntaxError(recognizer: Recognizer<*, *>?, offendingSymbol: Any?, line: Int, charPositionInline: Int, msg: String?, p5: RecognitionException?) {
 			println("Error $msg at $line,$charPositionInline")
@@ -26,14 +28,29 @@ class Parser {
 		override fun reportAttemptingFullContext(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: BitSet?, p5: ATNConfigSet?) { }
 	}
 
-	fun parse(text: String): AstProgram {
+	fun functionPush(func: AstFuncExpr) = functionStack.push(func)
+	fun functionPop(func: AstFuncExpr) {
+		val popped = functionStack.pop()
+		if (popped !== func)
+			throw Exception("Popped function was not the same as pushed function (func = $func, popped = $popped)")
+	}
+	val functionTop: AstFuncExpr? get() = if (functionStack.isEmpty()) null else functionStack.peek()
+
+	private var _module: AstModule = AstModule("")
+	val module: AstModule get() = _module
+
+	fun parse(moduleName: String, text: String): AstProgram {
+		_module = AstModule(moduleName)
+
 		val lexer = CherryLexer(ANTLRInputStream(text))
 		lexer.removeErrorListeners()
 		lexer.addErrorListener(errorListener)
 		val parser = CherryParser(CommonTokenStream(lexer))
 		parser.addErrorListener(errorListener)
+
 		val antlrRoot = parser.program()
-		val ast = antlrRoot.toAst()
+		val ast = antlrRoot.toAst(this)
+
 		println(ast)
 		return ast
 	}
@@ -54,11 +71,12 @@ document.clear();
 for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
-			val ast = Parser().parse("""
+			val ast = Parser().parse("<inline>", """
 function factorial(n) {
-	if (n == 0)
+	if (n == 0) {
+		testfunc();
 		return 1;
-	else
+	} else
 		return n * factorial(n-1);
 }
 function test(n) {

@@ -7,6 +7,7 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime
 
+import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstProgram
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
@@ -16,6 +17,7 @@ import kotlin.coroutines.experimental.intrinsics.*
 
 class Runtime(val program: AstProgram) {
 	val scopeStack = ScopeStack()
+	val lexicalStack = LexicalStack()
 	var totalSteps = 0
 	var maxSteps = 0
 	var nextStep: Continuation<Unit>? = null
@@ -25,11 +27,18 @@ class Runtime(val program: AstProgram) {
 	var exception: Throwable? = null
 
 	init {
-		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ args: ArrayValue -> RValue(5) }))
+		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ args: ArrayValue -> testFunc(args) }))
 	}
 
-	override fun toString(): String =
-		"runtime: totalSteps ${totalSteps}, maxSteps ${maxSteps}, completed ${completed}, result ${result}, exc ${exception}\n${scopeStack}"
+	fun testFunc(args: ArrayValue): Value {
+		println(lexicalStack)
+		println(lexicalStack.stackTrace)
+		return RValue(5)
+	}
+
+	override fun toString(): String {
+		return "runtime: totalSteps ${totalSteps}, maxSteps ${maxSteps}, completed ${completed}, result ${result}, exc ${exception}\n${scopeStack}"
+	}
 
 	// Returns true if we've fully completed execution.
 	fun execute(maxSteps: Int = -1): Boolean {
@@ -70,17 +79,20 @@ class Runtime(val program: AstProgram) {
 		return completed
 	}
 
-	fun scopePush(scope: Scope = MapScope(scopeStack.top)): Scope = scopeStack.push(scope)
-	fun scopePop(scope: Scope? = null): Scope =
-		if (scope != null) {
-			val popped = scopeStack.pop()
-			if (popped !== scope)
-				throw Exception("scope stack push/pop mismatch")
-			else
-				popped
-		} else
-			scopeStack.pop()
+	fun scopePush(scope: Scope = MapScope(scopeStack.top)): ScopeStackToken = ScopeStackToken(this, scopeStack.push(scope))
+	fun scopePop(scope: Scope): Unit {
+		val popped = scopeStack.pop()
+		if (popped !== scope)
+			throw Exception("scope stack push/pop mismatch")
+	}
 	val scope: Scope get() = scopeStack.top
+
+	fun lexicalPush(node: AstNode): LexicalStackToken = LexicalStackToken(this, lexicalStack.push(node))
+	fun lexicalPop(node: AstNode): Unit {
+		val popped = lexicalStack.pop()
+		if (popped !== node)
+			throw Exception("lexical stack push/pop mismatch")
+	}
 
 	suspend fun stepAdd() {
 		if (maxSteps < 0)

@@ -7,12 +7,21 @@
 
 package net.kayateia.flowerbox.common.cherry.parser
 
-import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.ParserRuleContext
+
+data class AstModule(val name: String)
 
 // Line number and column information stored from each AST element.
-data class AstLoc(val line: Int, val col: Int) {
+class AstLoc(val module: AstModule?, val enclosingFunction: AstFuncExpr?, val line: Int, val col: Int) {
+	override fun toString(): String {
+		return "AstLoc(${module?.name ?: "<unnamed>"}, ${enclosingFunction?.id ?: "<inline>"}, line $line, col $col"
+	}
 	companion object {
-		fun from(token: Token): AstLoc = AstLoc(token.line, token.charPositionInLine)
+		fun from(parser: Parser, parserRuleContext: ParserRuleContext): AstLoc = AstLoc(
+			parser.module, parser.functionTop,
+			parserRuleContext.start.line,
+			parserRuleContext.start.charPositionInLine
+		)
 	}
 }
 
@@ -70,7 +79,10 @@ interface AstBinary : AstAry {
 }
 
 // Concrete expressions
-data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: List<String>, val body: AstBlock) : AstExpr
+// Note about AstFuncExpr: AstFuncExpr must exist before evaluating the contents of "body", so they
+// can refer back to it. But we can't create AstFuncExpr without evaluating "body". So to resolve
+// this difficulty, "body" is a var here so it can be replaced with the real contents later.
+data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: List<String>, var body: AstBlock) : AstExpr
 data class AstIndexExpr(override val loc: AstLoc, val left: AstExpr, val index: List<AstExpr>) : AstExpr
 data class AstDotExpr(override val loc: AstLoc, val left: AstExpr, val member: String) : AstExpr
 data class AstCallExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr

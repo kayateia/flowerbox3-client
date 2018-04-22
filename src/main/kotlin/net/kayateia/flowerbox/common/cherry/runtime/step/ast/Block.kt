@@ -17,11 +17,9 @@ object Block : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode) = when (node) {
 		is AstBlock -> {
 			val scope = MapScope(runtime.scope)
-			runtime.scopePush(scope)
-			val result = Step.execList(runtime, node.stmts)
-			runtime.scopePop(scope)
-
-			result
+			runtime.scopePush().use {
+				Step.execList(runtime, node.stmts)
+			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

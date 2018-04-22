@@ -15,13 +15,10 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object ForSeq : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstForVarSeq -> {
-			val paramScope = MapScope(runtime.scope)
-			runtime.scopePush(paramScope)
-			Step.execList(runtime, node.decls)
-			val result = forCommon(runtime, node.cond, node.next, node.stmt)
-			runtime.scopePop(paramScope)
-
-			result
+			runtime.scopePush().use {
+				Step.execList(runtime, node.decls)
+				forCommon(runtime, node.cond, node.next, node.stmt)
+			}
 		}
 		is AstForSeq -> {
 			Step.execList(runtime, node.init)
