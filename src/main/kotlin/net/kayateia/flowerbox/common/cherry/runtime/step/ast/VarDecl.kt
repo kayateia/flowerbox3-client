@@ -9,10 +9,7 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstVarDecl
-import net.kayateia.flowerbox.common.cherry.runtime.NullValue
-import net.kayateia.flowerbox.common.cherry.runtime.Runtime
-import net.kayateia.flowerbox.common.cherry.runtime.ScopeLValue
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object VarDecl : Step {
@@ -22,9 +19,13 @@ object VarDecl : Step {
 					Step.exec(runtime, node.init)
 				else
 					NullValue()
-			runtime.scope.set(node.id, init.value)
+			if (init is FlowControlValue)
+				init
+			else {
+				runtime.scope.set(node.id, init.value)
 
-			ScopeLValue(runtime.scope, node.id)
+				ScopeLValue(runtime.scope, node.id)
+			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

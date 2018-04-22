@@ -9,17 +9,17 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstUnaryExpr
-import net.kayateia.flowerbox.common.cherry.runtime.Coercion
-import net.kayateia.flowerbox.common.cherry.runtime.RValue
-import net.kayateia.flowerbox.common.cherry.runtime.Runtime
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object UnaryExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstUnaryExpr -> {
 			val value = Step.exec(runtime, node.expr)
-			opExec(node.op, value)
+			if (value is FlowControlValue)
+				value
+			else
+				opExec(node.op, value)
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

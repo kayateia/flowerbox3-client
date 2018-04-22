@@ -16,8 +16,15 @@ object BinaryExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstBinaryExpr -> {
 			val left = Step.exec(runtime, node.left)
-			val right = Step.exec(runtime, node.right)
-			opExec(node.op, left, right)
+			if (left is ThrownValue)
+				left
+			else {
+				val right = Step.exec(runtime, node.right)
+				if (right is ThrownValue)
+					right
+				else
+					opExec(node.op, left, right)
+			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

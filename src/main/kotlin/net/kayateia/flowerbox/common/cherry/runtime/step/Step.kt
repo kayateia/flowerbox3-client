@@ -17,31 +17,58 @@ interface Step {
 
 	companion object {
 		fun toStep(node: AstNode): Step = when(node) {
+			// Overall program container
 			is AstProgram				-> Program
+
+			// Statements
 			is AstFuncDecl				-> FuncDecl
 			is AstBlock					-> Block
 			is AstVarStmt				-> VarStmt
 			is AstEmptyStmt				-> NoOp
 			is AstExprStmt				-> ExprStmt
 			is AstIfStmt				-> IfStmt
+			is AstDoWhileStmt			-> TODO()
+			is AstWhileStmt				-> TODO()
 			is AstForSeq				-> ForSeq
 			is AstForVarSeq				-> ForSeq
+			is AstForIn					-> TODO()
+			is AstForVarIn				-> TODO()
+			is AstContinueStmt			-> TODO()
+			is AstBreakStmt				-> TODO()
 			is AstReturnStmt			-> ReturnStmt
+			is AstWithStmt				-> TODO()
+			is AstSwitchStmt			-> TODO()
+			is AstThrowStmt				-> TODO()
+			is AstTryStmt				-> TODO()
 
+			// Try/catch/finally
+			is AstCatch					-> TODO()
+			is AstFinally				-> TODO()
+
+			// Variable declarations
 			is AstVarDecl				-> VarDecl
 
+			// Expressions
 			is AstFuncExpr				-> FuncExpr
-			//is AstIndexExpr				-> IndexExpr
+			is AstIndexExpr				-> TODO()
+			is AstDotExpr				-> TODO()
 			is AstCallExpr				-> CallExpr
+			is AstNewExpr				-> TODO()
 			is AstPostExpr				-> PostExpr
-			//is AstPreExpr				-> PreExpr
+			is AstDeleteExpr			-> TODO()
+			is AstVoidExpr				-> TODO()
+			is AstTypeofExpr			-> TODO()
+			is AstPreExpr				-> TODO()
 			is AstUnaryExpr				-> UnaryExpr
 			is AstBinaryExpr			-> BinaryExpr
 			is AstLazyBinaryExpr		-> LazyBinaryExpr
+			is AstTernaryExpr			-> TODO()
+			is AstThisExpr				-> TODO()
 			is AstIdExpr				-> IdExpr
-
 			is AstLiteralExpr			-> LiteralExpr
 			is AstExprListExpr			-> ExprListExpr
+			is AstArrayExpr				-> TODO()
+			is AstObjectExpr			-> TODO()
 
 			else -> {
 				throw Exception("invalid step type ${node.javaClass.canonicalName}")
@@ -59,7 +86,7 @@ interface Step {
 			for (item in items) {
 				last = toStep(item).execute(runtime, item)
 				runtime.stepAdd()
-				if (last is ReturnValue)
+				if (last is FlowControlValue)
 					break
 			}
 			return last ?: NullValue()

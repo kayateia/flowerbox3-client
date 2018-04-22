@@ -54,6 +54,8 @@ class IntrinsicValue(val delegate: (args: ArrayValue) -> Value) : Value {
 		set(value) {
 			throw Exception("can't assign into an intrinsic")
 		}
+
+	override fun toString(): String = "${delegate.javaClass.name}()"
 }
 
 class RValue(val constValue: Any?) : Value {
@@ -92,5 +94,29 @@ class ReturnValue(val returnValue: Value) : FlowControlValue {
 		get() = returnValue
 		set(value) {
 			throw Exception("can't assign into a return value")
+		}
+}
+
+class BreakValue : FlowControlValue {
+	override var value: Any?
+		get() = throw Exception("can't get the value of a break")
+		set(value) {
+			throw Exception("can't assign into a break value")
+		}
+}
+
+class ContinueValue : FlowControlValue {
+	override var value: Any?
+		get() = throw Exception("can't get the value of a continue")
+		set(value) {
+			throw Exception("can't assign into a continue value")
+		}
+}
+
+class ThrownValue(val thrownValue: Value) : FlowControlValue {
+	override var value: Any?
+		get() = thrownValue
+		set(value) {
+			throw Exception("can't assign into a thrown value")
 		}
 }

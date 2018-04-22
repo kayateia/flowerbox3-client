@@ -16,7 +16,6 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object Block : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode) = when (node) {
 		is AstBlock -> {
-			val scope = MapScope(runtime.scope)
 			runtime.scopePush().use {
 				Step.execList(runtime, node.stmts)
 			}

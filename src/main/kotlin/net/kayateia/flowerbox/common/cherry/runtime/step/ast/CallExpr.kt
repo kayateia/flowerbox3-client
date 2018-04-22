@@ -52,6 +52,7 @@ object CallExpr : Step {
 			val rv = Step.exec(runtime, func.funcNode.body)
 			return when (rv) {
 				is ReturnValue -> rv.returnValue.rvalue
+				is ThrownValue -> rv
 				else -> rv.rvalue
 			}
 		}
