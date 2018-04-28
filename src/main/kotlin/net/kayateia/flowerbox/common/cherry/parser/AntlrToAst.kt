@@ -8,6 +8,7 @@
 package net.kayateia.flowerbox.common.cherry.parser
 
 import net.kayateia.flowerbox.common.cherry.antlr.CherryParser.*
+import net.kayateia.flowerbox.common.strings.*
 
 fun ProgramContext.toAst(p: Parser): AstProgram = AstProgram(AstLoc.from(p, this), sourceElements().toAst(p))
 
@@ -112,7 +113,7 @@ fun FormalParameterListContext.toAst(p: Parser): List<String> = Identifier().map
 fun LiteralContext.toAst(p: Parser): Any? = when {
 	NullLiteral()?.text != null					-> null
 	BooleanLiteral()?.text != null				-> BooleanLiteral().text!!.toBoolean()
-	StringLiteral()?.text != null				-> StringLiteral().text
+	StringLiteral()?.text != null				-> StringLiteral().text.slice(1, -1)		// Includes the quotes
 	RegularExpressionLiteral()?.text != null	-> RegularExpressionLiteral().text
 	numericLiteral() != null					-> numericLiteral().toAst(p)
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid literal element type") }

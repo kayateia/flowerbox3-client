@@ -39,7 +39,15 @@ object BinaryExpr : Step {
 		"*" -> opExecNum(left, right) { l, r -> l * r }
 		"/" -> opExecNum(left, right) { l, r -> l / r }
 		"%" -> opExecNum(left, right) { l, r -> l % r }
-		"+" -> opExecNum(left, right) { l, r -> l + r }		// TODO - strings
+		"+" -> {
+			val leftPrim = Value.prim(left)
+			val rightPrim = Value.prim(right)
+			if (leftPrim is String || rightPrim is String) {
+				ConstValue(Coercion.toString(leftPrim) + Coercion.toString(rightPrim))
+			} else {
+				opExecNum(left, right) { l, r -> l + r }
+			}
+		}
 		"-" -> opExecNum(left, right) { l, r -> l - r }
 		"<" -> opExecNumBool(left, right) { l, r -> l < r }
 		"<=" -> opExecNumBool(left, right) { l, r -> l <= r }
