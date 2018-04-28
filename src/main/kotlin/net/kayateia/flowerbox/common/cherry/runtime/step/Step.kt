@@ -54,11 +54,11 @@ interface Step {
 			is AstDotExpr				-> DotExpr
 			is AstCallExpr				-> CallExpr
 			is AstNewExpr				-> TODO()
-			is AstPostExpr				-> PostExpr
+			is AstPostExpr				-> PrePostExpr
 			is AstDeleteExpr			-> TODO()
 			is AstVoidExpr				-> TODO()
 			is AstTypeofExpr			-> TODO()
-			is AstPreExpr				-> TODO()
+			is AstPreExpr				-> PrePostExpr
 			is AstUnaryExpr				-> UnaryExpr
 			is AstBinaryExpr			-> BinaryExpr
 			is AstLazyBinaryExpr		-> LazyBinaryExpr

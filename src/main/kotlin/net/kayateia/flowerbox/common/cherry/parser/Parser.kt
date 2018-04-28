@@ -130,6 +130,10 @@ for (var c=0; c<10; c++) {
 	b = b + c;
 }
 
+var g = 5;
+var h = g++;
+var i = ++g;
+
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute(10000)
