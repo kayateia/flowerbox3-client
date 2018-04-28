@@ -8,6 +8,7 @@ class Library {
 
 	init {
 		add(Math.members)
+		add(Debug.members)
 	}
 
 	fun add(members: List<IntrinsicImpl>) {
