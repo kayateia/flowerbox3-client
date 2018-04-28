@@ -48,7 +48,7 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
 	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params.fold("", {a,b -> "$a,$b"})})"
 }
 
-class IntrinsicValue(val delegate: (args: ArrayValue) -> Value) : Value {
+class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ArrayValue) -> Value) : Value {
 	override var value: Any?
 		get() = throw Exception("can't use intrinsic as RValue")
 		set(value) {
@@ -77,7 +77,7 @@ class NullValue : Value {
 	override fun toString(): String = "RValue(null)"
 }
 
-class ArrayValue(val arrayValue: List<RValue>) : Value {
+class ArrayValue(val arrayValue: List<Value>) : Value {
 	override var value: Any?
 		get() = throw Exception("can't use array value as RValue")
 		set(value) {
@@ -86,6 +86,45 @@ class ArrayValue(val arrayValue: List<RValue>) : Value {
 
 	override fun toString(): String = "ArrayValue(${arrayValue.fold("", {a,b -> "$a,$b"})})"
 }
+
+class ObjectSetter(val obj: ObjectValue, val key: String) :  LValue {
+	override var value: Any?
+		get() = obj.read(key)
+		set(value) {
+			if (value is Value)
+				obj.write(key, value)
+			else
+				obj.write(key, RValue(value))
+		}
+}
+
+open class ObjectValue(val map: HashMap<String, Value>, val readOnly: Boolean) : Value {
+	override var value: Any?
+		get() = throw Exception("can't use object value as RValue")
+		set(value) {
+			throw Exception("can't assign into an object value")
+		}
+
+	fun write(key: String, value: Value) = map.put(key, value)
+	fun read(key: String): Value? =
+		if (readOnly)
+			map[key]?.rvalue
+		else
+			ObjectSetter(this, key)
+	fun has(key: String) = map.containsKey(key)
+
+	override fun toString(): String = "ObjectValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
+}
+
+// A static is basically a special variant of a read-only object with an associated name and namespace.
+// Only the compiler can create a static, so it should be distinct from just objects.
+// Name should not include the static, and namespace should be formatted.with.dots.
+interface StaticObjectValue {
+	val name: String
+}
+
+class NamespaceValue(override val name: String) : StaticObjectValue, ObjectValue(HashMap(), true)
+class ClassValue(val namespace: String, override val name: String, val base: ClassValue) : StaticObjectValue, ObjectValue(HashMap(), true)
 
 interface FlowControlValue : Value
 

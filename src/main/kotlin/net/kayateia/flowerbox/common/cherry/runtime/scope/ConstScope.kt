@@ -7,6 +7,8 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.scope
 
+import net.kayateia.flowerbox.common.cherry.runtime.library.Library
+
 open class ConstScope(override val parent: Scope? = null) : MapScope(parent) {
 	override fun set(name: String, value: Any?) {
 		/* should throw an error here */
@@ -16,4 +18,8 @@ open class ConstScope(override val parent: Scope? = null) : MapScope(parent) {
 	}
 
 	fun setConstant(name: String, value: Any?) = super.setLocal(name, value)
+
+	fun setLibrary(library: Library) {
+		library.rootPackages.map.forEach { super.setLocal(it.key, it.value) }
+	}
 }

@@ -59,6 +59,8 @@ object CallExpr : Step {
 	}
 
 	private suspend fun executeNative(runtime: Runtime, node: AstCallExpr, func: IntrinsicValue): Value {
-		return func.delegate(getArgs(runtime, node))
+		val implicits = MapScope()
+		implicits.set("self", NullValue())
+		return func.delegate(runtime, implicits, getArgs(runtime, node))
 	}
 }

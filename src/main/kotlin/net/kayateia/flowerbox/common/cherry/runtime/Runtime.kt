@@ -9,6 +9,7 @@ package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstProgram
+import net.kayateia.flowerbox.common.cherry.runtime.library.Library
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
@@ -26,11 +27,16 @@ class Runtime(val program: AstProgram) {
 	var result: Any? = null
 	var exception: Throwable? = null
 
+	val library = Library()
+
 	init {
-		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ args: ArrayValue -> testFunc(args) }))
+		scopeStack.constScope.setLibrary(library)
+		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ArrayValue -> testFunc(implicits, args) }))
 	}
 
-	fun testFunc(args: ArrayValue): Value {
+	fun testFunc(implicits: Scope, args: ArrayValue): Value {
+		println("Implicits: $implicits")
+		println("Args: $args")
 		println(lexicalStack)
 		println(lexicalStack.stackTrace)
 		return RValue(5)
