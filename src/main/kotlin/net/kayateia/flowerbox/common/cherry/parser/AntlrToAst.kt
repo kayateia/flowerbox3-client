@@ -43,7 +43,7 @@ fun StatementContext.toAst(p: Parser): AstStatement = when (this) {
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid statement element type") }
 }
 
-fun IfStatementContext.toAst(p: Parser): AstIfStmt = AstIfStmt(AstLoc.from(p, this), expressionSequence().toAst(p), statement(0).toAst(p), statement(1).toAst(p))
+fun IfStatementContext.toAst(p: Parser): AstIfStmt = AstIfStmt(AstLoc.from(p, this), expressionSequence().toAst(p), statement(0).toAst(p), statement(1)?.toAst(p))
 
 fun IterationStatementContext.toAst(p: Parser) : AstStatement = when(this) {
 	is DoStatementContext		-> AstDoWhileStmt(AstLoc.from(p, this), statement().toAst(p), expressionSequence().toAst(p))

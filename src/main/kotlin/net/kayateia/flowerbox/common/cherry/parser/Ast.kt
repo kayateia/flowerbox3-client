@@ -41,7 +41,7 @@ data class AstVarStmt(override val loc: AstLoc, val decls: List<AstVarDecl>) : A
 data class AstEmptyStmt(override val loc: AstLoc) : AstStatement
 data class AstExprStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : AstStatement
 data class AstIfStmt(override val loc: AstLoc, val exprs: List<AstExpr>,
-				val ifTrue: AstStatement, val ifElse: AstStatement) : AstStatement
+				val ifTrue: AstStatement, val ifElse: AstStatement?) : AstStatement
 data class AstDoWhileStmt(override val loc: AstLoc, val stmt: AstStatement, val exprs: List<AstExpr>) : AstStatement
 data class AstWhileStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
 data class AstForSeq(override val loc: AstLoc, val init: List<AstExpr>, val cond: List<AstExpr>,

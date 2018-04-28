@@ -9,10 +9,7 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstIfStmt
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
-import net.kayateia.flowerbox.common.cherry.runtime.Coercion
-import net.kayateia.flowerbox.common.cherry.runtime.FlowControlValue
-import net.kayateia.flowerbox.common.cherry.runtime.Runtime
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object IfStmt : Step {
@@ -24,8 +21,12 @@ object IfStmt : Step {
 			else {
 				if (Coercion.toBool(Value.prim(result)))
 					Step.exec(runtime, node.ifTrue)
-				else
-					Step.exec(runtime, node.ifElse)
+				else {
+					if (node.ifElse != null)
+						Step.exec(runtime, node.ifElse)
+					else
+						NullValue()
+				}
 			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
