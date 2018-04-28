@@ -27,8 +27,8 @@ interface Step {
 			is AstEmptyStmt				-> NoOp
 			is AstExprStmt				-> ExprStmt
 			is AstIfStmt				-> IfStmt
-			is AstDoWhileStmt			-> TODO()
-			is AstWhileStmt				-> TODO()
+			is AstDoWhileStmt			-> WhileStmt
+			is AstWhileStmt				-> WhileStmt
 			is AstForSeq				-> ForSeq
 			is AstForVarSeq				-> ForSeq
 			is AstForIn					-> TODO()

@@ -36,7 +36,7 @@ object ForSeq : Step {
 			val bodyValue = Step.exec(runtime, stmt)
 			if (bodyValue is FlowControlValue) {
 				when (bodyValue) {
-					is ReturnValue		-> return bodyValue
+					is ReturnValue		-> return Value.root(bodyValue.returnValue)
 					is ThrownValue		-> return bodyValue
 					is ContinueValue	-> {}
 					is BreakValue		-> return NullValue()

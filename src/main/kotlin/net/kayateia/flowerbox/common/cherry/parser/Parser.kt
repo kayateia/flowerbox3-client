@@ -95,6 +95,14 @@ var p = testfunc();
 
 var q = sys.math.sin(0.5);
 
+m = 0;
+while (m < 5)
+	m++;
+var n = 0;
+do {
+	n++;
+} while (n < 5);
+
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute(10000)
