@@ -85,7 +85,7 @@ interface AstBinary : AstAry {
 // Note about AstFuncExpr: AstFuncExpr must exist before evaluating the contents of "body", so they
 // can refer back to it. But we can't create AstFuncExpr without evaluating "body". So to resolve
 // this difficulty, "body" is a var here so it can be replaced with the real contents later.
-data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: List<String>, var body: AstBlock) : AstExpr
+data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: List<String>?, var body: AstBlock) : AstExpr
 data class AstIndexExpr(override val loc: AstLoc, val left: AstExpr, val index: List<AstExpr>) : AstExpr
 data class AstDotExpr(override val loc: AstLoc, val left: AstExpr, val member: String) : AstExpr
 data class AstCallExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr

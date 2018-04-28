@@ -79,7 +79,7 @@ fun VariableDeclarationContext.toAst(p: Parser): AstVarDecl = AstVarDecl(AstLoc.
 fun ExpressionSequenceContext.toAst(p: Parser) : List<AstExpr> = this.singleExpression().map { it.toAst(p) }
 fun SingleExpressionContext.toAst(p: Parser): AstExpr = when(this) {
 	is FunctionExpressionContext			-> {
-		val funcExpr = AstFuncExpr(AstLoc.from(p, this), Identifier()?.text, formalParameterList().toAst(p), AstBlock(AstLoc.from(p, this), listOf()))
+		val funcExpr = AstFuncExpr(AstLoc.from(p, this), Identifier()?.text, formalParameterList()?.toAst(p), AstBlock(AstLoc.from(p, this), listOf()))
 		p.functionPush(funcExpr)
 		funcExpr.body = AstBlock(funcExpr.body.loc, functionBody().sourceElements().toAst(p))
 		p.functionPop(funcExpr)

@@ -72,7 +72,7 @@ class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
 }
 
 class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
-	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params.fold("", {a,b -> "$a,$b"})})"
+	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})})"
 }
 
 class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ArrayValue) -> Value) : Value {

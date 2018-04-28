@@ -39,11 +39,10 @@ object CallExpr : Step {
 		val paramScope = MapScope(func.capturedScope)
 		paramScope.setLocal("arguments", args)
 
-		val zipped = func.funcNode.params.zip(args.arrayValue)
-		zipped.forEach {
+		val zipped = func.funcNode.params?.zip(args.arrayValue)?.forEach {
 			paramScope.setLocal(it.first, it.second)
 		}
-		func.funcNode.params.forEach {
+		func.funcNode.params?.forEach {
 			if (!paramScope.hasLocal(it))
 				paramScope.setLocal(it, NullValue())
 		}
