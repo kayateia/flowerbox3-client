@@ -72,6 +72,18 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("<inline>", """
+var f = 5;
+switch (f) {
+	case "a":
+		break;
+	case 5:
+		f++;
+		// break;
+	default:
+		f = "fooz:" + f;
+		break;
+}
+
 function factorial(n) {
 	if (n == 0) {
 		testfunc();

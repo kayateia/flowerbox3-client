@@ -36,12 +36,30 @@ fun StatementContext.toAst(p: Parser): AstStatement = when (this) {
 	is RetStmtContext		-> AstReturnStmt(AstLoc.from(p, this), returnStatement().expressionSequence().toAst(p))
 	is WithStmtContext		-> AstWithStmt(AstLoc.from(p, this), withStatement().expressionSequence().toAst(p), withStatement().statement().toAst(p))
 	is LabelStmtContext		-> throw Exception("not supported")
-	is SwitchStmtContext	-> TODO()
+	is SwitchStmtContext	-> AstSwitchStmt(AstLoc.from(p, this), switchStatement().expressionSequence().toAst(p), switchStatement().caseBlock().toAst(p))
 	is ThrowStmtContext		-> AstThrowStmt(AstLoc.from(p, this), throwStatement().expressionSequence().toAst(p))
 	is TryStmtContext		-> TODO()
 	is DebugStmtContext		-> throw Exception("not supported")
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid statement element type") }
 }
+
+fun CaseBlockContext.toAst(p: Parser): List<AstSwitchCase> {
+	val results: MutableList<AstSwitchCase> = mutableListOf()
+	caseClauses().forEach {
+		it.caseClause().forEach {
+			results += it.toAst(p)
+		}
+	}
+
+	val defaultClause = defaultClause()?.toAst(p)
+	if (defaultClause != null)
+		results += defaultClause
+
+	return results
+}
+
+fun CaseClauseContext.toAst(p: Parser): AstSwitchCase = AstSwitchCase(AstLoc.from(p, this), expressionSequence().toAst(p), statementList().statement().map { it.toAst(p) })
+fun DefaultClauseContext.toAst(p: Parser): AstSwitchCase = AstSwitchCase(AstLoc.from(p, this), null, statementList().statement().map { it.toAst(p) })
 
 fun IfStatementContext.toAst(p: Parser): AstIfStmt = AstIfStmt(AstLoc.from(p, this), expressionSequence().toAst(p), statement(0).toAst(p), statement(1)?.toAst(p))
 

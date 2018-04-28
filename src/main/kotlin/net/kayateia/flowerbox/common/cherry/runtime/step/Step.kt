@@ -37,7 +37,7 @@ interface Step {
 			is AstBreakStmt				-> LoopFlowStmt
 			is AstReturnStmt			-> ReturnStmt
 			is AstWithStmt				-> TODO()
-			is AstSwitchStmt			-> TODO()
+			is AstSwitchStmt			-> SwitchStmt
 			is AstThrowStmt				-> TODO()
 			is AstTryStmt				-> TODO()
 
