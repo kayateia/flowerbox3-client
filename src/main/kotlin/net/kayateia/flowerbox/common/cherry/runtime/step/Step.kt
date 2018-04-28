@@ -38,12 +38,8 @@ interface Step {
 			is AstReturnStmt			-> ReturnStmt
 			is AstWithStmt				-> TODO()
 			is AstSwitchStmt			-> SwitchStmt
-			is AstThrowStmt				-> TODO()
-			is AstTryStmt				-> TODO()
-
-			// Try/catch/finally
-			is AstCatch					-> TODO()
-			is AstFinally				-> TODO()
+			is AstThrowStmt				-> ThrowStmt
+			is AstTryStmt				-> TryStmt
 
 			// Variable declarations
 			is AstVarDecl				-> VarDecl

@@ -35,6 +35,7 @@ interface Value {
 
 		// Takes any Value and tries to return the simplest possible Value representing it.
 		fun root(value: Value): Value = when (value) {
+			is FlowControlValue -> value
 			is RValue -> {
 				val unboxed = value.read()
 				if (unboxed is Value)

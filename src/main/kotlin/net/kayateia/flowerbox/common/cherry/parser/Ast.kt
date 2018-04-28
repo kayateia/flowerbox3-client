@@ -56,13 +56,13 @@ data class AstReturnStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : A
 data class AstWithStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val stmt: AstStatement) : AstStatement
 data class AstSwitchStmt(override val loc: AstLoc, val exprs: List<AstExpr>, val cases: List<AstSwitchCase>) : AstStatement
 data class AstThrowStmt(override val loc: AstLoc, val exprs: List<AstExpr>) : AstStatement
-data class AstTryStmt(override val loc: AstLoc, val block: AstBlock, val catches: List<AstCatch>, val finally: AstFinally) : AstStatement
+data class AstTryStmt(override val loc: AstLoc, val block: AstBlock, val catch: AstCatch?, val finally: AstFinally?) : AstStatement
 
 // Switch
 data class AstSwitchCase(override val loc: AstLoc, val exprs: List<AstExpr>?, val stmts: List<AstStatement>) : AstStatement
 
 // Try/catch/finally
-data class AstCatch(override val loc: AstLoc, val id: String, val block: AstBlock) : AstNode
+data class AstCatch(override val loc: AstLoc, val id: String?, val block: AstBlock) : AstNode
 data class AstFinally(override val loc: AstLoc, val block: AstBlock) : AstNode
 
 // Variable declarations

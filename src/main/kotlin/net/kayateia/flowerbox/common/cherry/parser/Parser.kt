@@ -72,6 +72,19 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("<inline>", """
+try {
+	var tmp = function() {
+		sys.dbg.println("throwing now!");
+		throw "test throw";
+	};
+	tmp();
+	sys.dbg.println("past func call");
+} catch (caught) {
+	sys.dbg.println(caught);
+} finally {
+	sys.dbg.println("finally!");
+}
+
 var f = 5;
 switch (f) {
 	case "a":

@@ -25,7 +25,7 @@ fun SourceElementContext.toAst(p: Parser): AstStatement {
 }
 
 fun StatementContext.toAst(p: Parser): AstStatement = when (this) {
-	is BlockStmtContext		-> AstBlock(AstLoc.from(p, this), block().statementList().statement().map { it.toAst(p) })
+	is BlockStmtContext		-> block().toAst(p)
 	is VarStmtContext		-> AstVarStmt(AstLoc.from(p, this), variableStatement().variableDeclarationList().variableDeclaration().map { it.toAst(p) })
 	is EmptyStmtContext		-> AstEmptyStmt(AstLoc.from(p, this))
 	is ExprStmtContext		-> AstExprStmt(AstLoc.from(p, this), expressionStatement().expressionSequence().toAst(p))
@@ -38,10 +38,12 @@ fun StatementContext.toAst(p: Parser): AstStatement = when (this) {
 	is LabelStmtContext		-> throw Exception("not supported")
 	is SwitchStmtContext	-> AstSwitchStmt(AstLoc.from(p, this), switchStatement().expressionSequence().toAst(p), switchStatement().caseBlock().toAst(p))
 	is ThrowStmtContext		-> AstThrowStmt(AstLoc.from(p, this), throwStatement().expressionSequence().toAst(p))
-	is TryStmtContext		-> TODO()
+	is TryStmtContext		-> AstTryStmt(AstLoc.from(p, this), tryStatement().block().toAst(p), tryStatement().catchProduction()?.toAst(p), tryStatement().finallyProduction()?.toAst(p))
 	is DebugStmtContext		-> throw Exception("not supported")
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid statement element type") }
 }
+
+fun BlockContext.toAst(p: Parser): AstBlock = AstBlock(AstLoc.from(p, this), statementList().statement().map { it.toAst(p) })
 
 fun CaseBlockContext.toAst(p: Parser): List<AstSwitchCase> {
 	val results: MutableList<AstSwitchCase> = mutableListOf()
@@ -60,6 +62,9 @@ fun CaseBlockContext.toAst(p: Parser): List<AstSwitchCase> {
 
 fun CaseClauseContext.toAst(p: Parser): AstSwitchCase = AstSwitchCase(AstLoc.from(p, this), expressionSequence().toAst(p), statementList().statement().map { it.toAst(p) })
 fun DefaultClauseContext.toAst(p: Parser): AstSwitchCase = AstSwitchCase(AstLoc.from(p, this), null, statementList().statement().map { it.toAst(p) })
+
+fun CatchProductionContext.toAst(p: Parser): AstCatch = AstCatch(AstLoc.from(p, this), Identifier()?.text, block().toAst(p))
+fun FinallyProductionContext.toAst(p: Parser): AstFinally = AstFinally(AstLoc.from(p, this), block().toAst(p))
 
 fun IfStatementContext.toAst(p: Parser): AstIfStmt = AstIfStmt(AstLoc.from(p, this), expressionSequence().toAst(p), statement(0).toAst(p), statement(1)?.toAst(p))
 
