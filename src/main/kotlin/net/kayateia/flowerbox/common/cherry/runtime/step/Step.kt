@@ -51,7 +51,7 @@ interface Step {
 			// Expressions
 			is AstFuncExpr				-> FuncExpr
 			is AstIndexExpr				-> TODO()
-			is AstDotExpr				-> TODO()
+			is AstDotExpr				-> DotExpr
 			is AstCallExpr				-> CallExpr
 			is AstNewExpr				-> TODO()
 			is AstPostExpr				-> PostExpr

@@ -9,10 +9,10 @@ object Math {
 	)
 
 	private fun sin(runtime: Runtime, params: ArrayValue): Value {
-		return RValue(java.lang.Math.sin(Coercion.toNum(params.arrayValue[0].rvalue)))
+		return ConstValue(java.lang.Math.sin(Coercion.toNum(Value.prim(params.arrayValue[0]))))
 	}
 
 	private fun cos(runtime: Runtime, params: ArrayValue): Value {
-		return RValue(java.lang.Math.cos(Coercion.toNum(params.arrayValue[0].rvalue)))
+		return ConstValue(java.lang.Math.cos(Coercion.toNum(Value.prim(params.arrayValue[0]))))
 	}
 }

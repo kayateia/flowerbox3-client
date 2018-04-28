@@ -30,10 +30,10 @@ object BinaryExpr : Step {
 	}
 
 	private fun opExecNum(left: Value, right: Value, op: (left: Double, right: Double) -> Double) =
-		RValue(op(Coercion.toNum(Value.getRootValue(left)), Coercion.toNum(Value.getRootValue(right))))
+		ConstValue(op(Coercion.toNum(Value.prim(left)), Coercion.toNum(Value.prim(right))))
 
 	private fun opExecNumBool(left: Value, right: Value, op: (left: Double, right: Double) -> Boolean) =
-		RValue(op(Coercion.toNum(Value.getRootValue(left)), Coercion.toNum(Value.getRootValue(right))))
+		ConstValue(op(Coercion.toNum(Value.prim(left)), Coercion.toNum(Value.prim(right))))
 
 	private fun opExec(op: String, left: Value, right: Value): Value = when (op) {
 		"*" -> opExecNum(left, right) { l, r -> l * r }
@@ -46,12 +46,12 @@ object BinaryExpr : Step {
 		">" -> opExecNumBool(left, right) { l, r -> l > r }
 		">=" -> opExecNumBool(left, right) { l, r -> l >= r }
 
-		"==" -> RValue(Coercion.toBool(Value.getRootValue(left) == Value.getRootValue(right)))					// TODO - non-Kotlin semantics
+		"==" -> ConstValue(Value.compare(left, right))
 		"=" -> {
 			when (left) {
 				is LValue -> {
-					val simplified = RValue(Value.getRootValue(right))
-					left.value = simplified
+					val simplified = Value.root(right)
+					left.write(simplified)
 					simplified
 				}
 				else -> throw Exception("can't assign to RValue")

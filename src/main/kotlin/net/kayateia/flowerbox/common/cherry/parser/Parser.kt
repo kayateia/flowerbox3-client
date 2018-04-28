@@ -93,6 +93,8 @@ for (var l=0; l<10; l++) {
 }
 var p = testfunc();
 
+var q = sys.math.sin(0.5);
+
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute(10000)

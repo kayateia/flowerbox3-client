@@ -25,16 +25,16 @@ object UnaryExpr : Step {
 	}
 
 	private fun opExec(op: String, value: Any?): Value = when (op) {
-		"+" -> RValue(value)
+		"+" -> ConstValue(Coercion.toNum(value))
 		"-" -> if (value is Double)
-				RValue(-value)
+				ConstValue(-value)
 			else
 				throw Exception("type error on unary -")
 		"~" -> if (value is Double)
 				throw Exception("unary ~ not supported")
 			else
 				throw Exception("type error on unary ~")
-		"!" -> RValue(!Coercion.toBool(value))
+		"!" -> ConstValue(!Value.bool(value))
 		else -> throw Exception("invalid unary operator ${op}")
 	}
 }

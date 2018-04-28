@@ -22,7 +22,7 @@ object IfStmt : Step {
 			if (result is FlowControlValue)
 				result
 			else {
-				if (Coercion.toBool(result.value))
+				if (Coercion.toBool(Value.prim(result)))
 					Step.exec(runtime, node.ifTrue)
 				else
 					Step.exec(runtime, node.ifElse)

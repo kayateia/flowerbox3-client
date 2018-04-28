@@ -39,10 +39,11 @@ class Runtime(val program: AstProgram) {
 		println("Args: $args")
 		println(lexicalStack)
 		println(lexicalStack.stackTrace)
-		return RValue(5)
+		return ConstValue(5)
 	}
 
 	override fun toString(): String {
+		exception?.printStackTrace()
 		return "runtime: totalSteps ${totalSteps}, maxSteps ${maxSteps}, completed ${completed}, result ${result}, exc ${exception}\n${scopeStack}"
 	}
 

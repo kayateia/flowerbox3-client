@@ -22,25 +22,25 @@ object LazyBinaryExpr : Step {
 				when (node.op) {
 					// Only the || operator does the weird value passing thing.
 					"||" -> {
-						if (Coercion.toBool(left.value))
+						if (Value.bool(left))
 							left
 						else {
 							val right = Step.exec(runtime, node.right)
 							if (right is FlowControlValue)
 								right
 							else
-								right.rvalue
+								Value.root(right)
 						}
 					}
 					"&&" -> {
-						if (Coercion.toBool(left.value)) {
+						if (Value.bool(left)) {
 							val right = Step.exec(runtime, node.right)
 							if (right is FlowControlValue)
 								right
 							else
-								RValue(true)
+								ConstValue(true)
 						} else
-							RValue(false)
+							ConstValue(false)
 					}
 					else -> throw Exception("unknown lazy binop ${node.op}")
 				}

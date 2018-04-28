@@ -16,7 +16,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object CallExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstCallExpr -> {
-			val func = Step.exec(runtime, node.left)?.value
+			val func = Value.root(Step.exec(runtime, node.left))
 			runtime.lexicalPush(node).use {
 				when (func) {
 					is FuncValue -> executeCherry(runtime, node, func)
@@ -30,7 +30,7 @@ object CallExpr : Step {
 
 	private suspend fun getArgs(runtime: Runtime, node: AstCallExpr): ArrayValue {
 		return ArrayValue(node.args.map {
-			Step.exec(runtime, it).rvalue
+			Value.root(Step.exec(runtime, it))
 		})
 	}
 
@@ -51,9 +51,9 @@ object CallExpr : Step {
 		runtime.scopePush(paramScope).use {
 			val rv = Step.exec(runtime, func.funcNode.body)
 			return when (rv) {
-				is ReturnValue -> rv.returnValue.rvalue
+				is ReturnValue -> Value.root(rv.returnValue)
 				is ThrownValue -> rv
-				else -> rv.rvalue
+				else -> Value.root(rv)
 			}
 		}
 	}

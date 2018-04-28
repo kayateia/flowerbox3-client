@@ -10,105 +10,104 @@ package net.kayateia.flowerbox.common.cherry.runtime
 import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
+// Represents any special (non-primitive) value in the runtime.
 interface Value {
-	var value: Any?
-	val rvalue: RValue
-		get() = RValue(value)
-
 	companion object {
-		fun getRootValue(value: Any?): Any? = when (value) {
-			is Value -> getRootValue(value.value)
+		// Takes any value, primitive/native or otherwise, and tries to return the primitive
+		// value behind it. Throws if it's a non-readable non-primitive.
+		fun prim(value: Any?): Any? = when (value) {
+			is RValue -> prim(value.read())
+			is Value -> throw Exception("can't read non-primitive Value $value")
+			else -> value
+		}
+
+		// Converts this Value into something resembling a boolean.
+		fun bool(value: Any?): Boolean = when (value) {
+			is RValue -> Coercion.toBool(prim(value))
+			is NullValue -> false
+			is Value -> true
+			else -> Coercion.toBool(value)
+		}
+
+		// Really naive implementation of value comparison.
+		// TODO - non-Kotlin semantics and func/obj/etc identity comparisons
+		fun compare(valueA: Any?, valueB: Any?): Boolean = prim(valueA) == prim(valueB)
+
+		// Takes any Value and tries to return the simplest possible Value representing it.
+		fun root(value: Value): Value = when (value) {
+			is RValue -> {
+				val unboxed = value.read()
+				if (unboxed is Value)
+					root(unboxed)
+				else
+					value
+			}
 			else -> value
 		}
 	}
 }
 
-interface LValue : Value
+// Represents a readable non-primitive value in the runtime.
+interface RValue : Value {
+	fun read(): Any?
+}
 
-class ScopeLValue(val scope: Scope, val name: String) : LValue {
-	override var value: Any?
-		get() = scope.get(name)
-		set(value) {
-			scope.set(name, when (value) {
-				is Value -> value.rvalue
-				else -> RValue(value)
-			})
-		}
+// Represents a writable non-primitive value in the runtime.
+interface LValue : Value {
+	fun write(value: Any?)
+}
 
-	override fun toString(): String = "LValue(${name})"
+// A reference to an item in a scope which may be read or written.
+class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
+	override fun read(): Any? = scope.get(name)
+	override fun write(value: Any?) {
+		scope.set(name, when (value) {
+			is RValue -> value.read()
+			is Value -> value
+			else -> ConstValue(value)
+		})
+	}
+
+	override fun toString(): String = "ScopeValue(${name})"
 }
 
 class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
-	override var value: Any?
-		get() = throw Exception("can't use function value as RValue")
-		set(value) {
-			throw Exception("can't assign into a function value")
-		}
-
 	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params.fold("", {a,b -> "$a,$b"})})"
 }
 
 class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ArrayValue) -> Value) : Value {
-	override var value: Any?
-		get() = throw Exception("can't use intrinsic as RValue")
-		set(value) {
-			throw Exception("can't assign into an intrinsic")
-		}
-
 	override fun toString(): String = "${delegate.javaClass.name}()"
 }
 
-class RValue(val constValue: Any?) : Value {
-	override var value: Any?
-		get() = constValue
-		set(value) {
-			throw Exception("can't set a constant (RValue)")
-		}
-	override fun toString(): String = "RValue(${value})"
+class ConstValue(val constValue: Any?) : RValue {
+	override fun read(): Any? = constValue
+	override fun toString(): String = "ConstValue(${constValue})"
 }
 
 class NullValue : Value {
-	override var value: Any?
-		get() = null
-		set(value) {
-			throw Exception("can't assign into a null value")
-		}
-
-	override fun toString(): String = "RValue(null)"
+	override fun toString(): String = "NullValue()"
 }
 
 class ArrayValue(val arrayValue: List<Value>) : Value {
-	override var value: Any?
-		get() = throw Exception("can't use array value as RValue")
-		set(value) {
-			throw Exception("can't assign into an array value")
-		}
-
 	override fun toString(): String = "ArrayValue(${arrayValue.fold("", {a,b -> "$a,$b"})})"
 }
 
-class ObjectSetter(val obj: ObjectValue, val key: String) :  LValue {
-	override var value: Any?
-		get() = obj.read(key)
-		set(value) {
-			if (value is Value)
-				obj.write(key, value)
-			else
-				obj.write(key, RValue(value))
-		}
+class ObjectSetter(val obj: ObjectValue, val key: String) : RValue, LValue {
+	override fun read(): Any? = obj.read(key)
+
+	override fun write(value: Any?) {
+		if (value is Value)
+			obj.write(key, value)
+		else
+			obj.write(key, ConstValue(value))
+	}
 }
 
 open class ObjectValue(val map: HashMap<String, Value>, val readOnly: Boolean) : Value {
-	override var value: Any?
-		get() = throw Exception("can't use object value as RValue")
-		set(value) {
-			throw Exception("can't assign into an object value")
-		}
-
 	fun write(key: String, value: Value) = map.put(key, value)
 	fun read(key: String): Value? =
 		if (readOnly)
-			map[key]?.rvalue
+			map[key]
 		else
 			ObjectSetter(this, key)
 	fun has(key: String) = map.containsKey(key)
@@ -128,34 +127,12 @@ class ClassValue(val namespace: String, override val name: String, val base: Cla
 
 interface FlowControlValue : Value
 
-class ReturnValue(val returnValue: Value) : FlowControlValue {
-	override var value: Any?
-		get() = returnValue
-		set(value) {
-			throw Exception("can't assign into a return value")
-		}
-}
+class ReturnValue(val returnValue: Value) : FlowControlValue
 
-class BreakValue : FlowControlValue {
-	override var value: Any?
-		get() = throw Exception("can't get the value of a break")
-		set(value) {
-			throw Exception("can't assign into a break value")
-		}
-}
+class BreakValue : FlowControlValue
 
-class ContinueValue : FlowControlValue {
-	override var value: Any?
-		get() = throw Exception("can't get the value of a continue")
-		set(value) {
-			throw Exception("can't assign into a continue value")
-		}
-}
+class ContinueValue : FlowControlValue
 
-class ThrownValue(val thrownValue: Value) : FlowControlValue {
-	override var value: Any?
-		get() = thrownValue
-		set(value) {
-			throw Exception("can't assign into a thrown value")
-		}
+class ThrownValue(val thrownValue: Any?) : FlowControlValue, RValue {
+	override fun read(): Any? = thrownValue
 }

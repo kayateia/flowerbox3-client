@@ -29,7 +29,7 @@ object ForSeq : Step {
 
 	private suspend fun forCommon(runtime: Runtime, cond: List<AstExpr>, next: List<AstExpr>, stmt: AstStatement): Value {
 		while (true) {
-			val condValue = Coercion.toBool(Step.execList(runtime, cond).value)
+			val condValue = Coercion.toBool(Value.prim(Step.execList(runtime, cond)))
 			if (!condValue)
 				return NullValue()
 
