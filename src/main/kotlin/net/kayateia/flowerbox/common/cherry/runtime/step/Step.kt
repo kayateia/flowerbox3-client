@@ -33,8 +33,8 @@ interface Step {
 			is AstForVarSeq				-> ForSeq
 			is AstForIn					-> TODO()
 			is AstForVarIn				-> TODO()
-			is AstContinueStmt			-> TODO()
-			is AstBreakStmt				-> TODO()
+			is AstContinueStmt			-> LoopFlowStmt
+			is AstBreakStmt				-> LoopFlowStmt
 			is AstReturnStmt			-> ReturnStmt
 			is AstWithStmt				-> TODO()
 			is AstSwitchStmt			-> TODO()

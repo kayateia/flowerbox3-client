@@ -103,6 +103,21 @@ do {
 	n++;
 } while (n < 5);
 
+var a = 0;
+while (a < 5) {
+	if (a == 3)
+		break;
+	else
+		a++;
+}
+
+var b = "";
+for (var c=0; c<10; c++) {
+	if (c == 4)
+		continue;
+	b = b + c;
+}
+
 			""")
 			val runtime = Runtime(ast)
 			val rv = runtime.execute(10000)
