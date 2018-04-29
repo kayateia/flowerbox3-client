@@ -14,8 +14,8 @@ object Debug {
 		IntrinsicImpl(listOf("sys", "dbg"), "println", { rt, i, p -> println(rt, p) })
 	)
 
-	private fun println(runtime: Runtime, params: ArrayValue): Value {
-		println(params.arrayValue.map { it.toString() }.foldIndexed("", { i, a, b -> if (i == 0) b else a + b }))
+	private fun println(runtime: Runtime, params: ListValue): Value {
+		println(params.listValue.map { it.toString() }.foldIndexed("", { i, a, b -> if (i == 0) b else a + b }))
 		return NullValue()
 	}
 }

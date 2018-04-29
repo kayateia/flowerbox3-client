@@ -46,7 +46,7 @@ interface Step {
 
 			// Expressions
 			is AstFuncExpr				-> FuncExpr
-			is AstIndexExpr				-> TODO()
+			is AstIndexExpr				-> IndexExpr
 			is AstDotExpr				-> DotExpr
 			is AstCallExpr				-> CallExpr
 			is AstNewExpr				-> TODO()
@@ -63,8 +63,8 @@ interface Step {
 			is AstIdExpr				-> IdExpr
 			is AstLiteralExpr			-> LiteralExpr
 			is AstExprListExpr			-> ExprListExpr
-			is AstArrayExpr				-> TODO()
-			is AstObjectExpr			-> TODO()
+			is AstListExpr				-> ListExpr
+			is AstDictExpr				-> TODO()
 
 			else -> {
 				throw Exception("invalid step type ${node.javaClass.canonicalName}")

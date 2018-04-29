@@ -28,10 +28,10 @@ object CallExpr : Step {
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 
-	private suspend fun getArgs(runtime: Runtime, node: AstCallExpr): ArrayValue {
-		return ArrayValue(node.args.map {
+	private suspend fun getArgs(runtime: Runtime, node: AstCallExpr): ListValue {
+		return ListValue(node.args.map {
 			Value.root(Step.exec(runtime, it))
-		})
+		}.toMutableList())
 	}
 
 	private suspend fun executeCherry(runtime: Runtime, node: AstCallExpr, func: FuncValue): Value {
@@ -39,7 +39,7 @@ object CallExpr : Step {
 		val paramScope = MapScope(func.capturedScope)
 		paramScope.setLocal("arguments", args)
 
-		val zipped = func.funcNode.params?.zip(args.arrayValue)?.forEach {
+		val zipped = func.funcNode.params?.zip(args.listValue)?.forEach {
 			paramScope.setLocal(it.first, it.second)
 		}
 		func.funcNode.params?.forEach {

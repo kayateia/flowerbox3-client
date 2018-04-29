@@ -15,11 +15,11 @@ object Math {
 		IntrinsicImpl(listOf("sys", "math"), "cos", { rt, i, p -> cos(rt, p) })
 	)
 
-	private fun sin(runtime: Runtime, params: ArrayValue): Value {
-		return ConstValue(java.lang.Math.sin(Coercion.toNum(Value.prim(params.arrayValue[0]))))
+	private fun sin(runtime: Runtime, params: ListValue): Value {
+		return ConstValue(java.lang.Math.sin(Coercion.toNum(Value.prim(params.listValue[0]))))
 	}
 
-	private fun cos(runtime: Runtime, params: ArrayValue): Value {
-		return ConstValue(java.lang.Math.cos(Coercion.toNum(Value.prim(params.arrayValue[0]))))
+	private fun cos(runtime: Runtime, params: ListValue): Value {
+		return ConstValue(java.lang.Math.cos(Coercion.toNum(Value.prim(params.listValue[0]))))
 	}
 }

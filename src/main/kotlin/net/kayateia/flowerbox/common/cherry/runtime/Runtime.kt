@@ -31,10 +31,10 @@ class Runtime(val program: AstProgram) {
 
 	init {
 		scopeStack.constScope.setLibrary(library)
-		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ArrayValue -> testFunc(implicits, args) }))
+		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ListValue -> testFunc(implicits, args) }))
 	}
 
-	fun testFunc(implicits: Scope, args: ArrayValue): Value {
+	fun testFunc(implicits: Scope, args: ListValue): Value {
 		println("Implicits: $implicits")
 		println("Args: $args")
 		println(lexicalStack)

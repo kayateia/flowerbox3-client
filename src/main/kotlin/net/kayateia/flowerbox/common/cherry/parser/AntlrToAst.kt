@@ -123,9 +123,9 @@ fun SingleExpressionContext.toAst(p: Parser): AstExpr = when(this) {
 	is ThisExpressionContext				-> AstThisExpr(AstLoc.from(p, this))
 	is IdentifierExpressionContext			-> AstIdExpr(AstLoc.from(p, this), Identifier().text)
 	is LiteralExpressionContext				-> AstLiteralExpr(AstLoc.from(p, this), literal().toAst(p))
-	is ArrayLiteralExpressionContext		-> AstArrayExpr(AstLoc.from(p, this), arrayLiteral().toAst(p))
+	is ArrayLiteralExpressionContext		-> AstListExpr(AstLoc.from(p, this), arrayLiteral().toAst(p))
 // TODO
-// is ObjectLiteralExpressionContext -> AstObjectExpr(objectLiteral().toAst(p))
+// is ObjectLiteralExpressionContext -> AstDictExpr(objectLiteral().toAst(p))
 	is ParenthesizedExpressionContext		-> AstExprListExpr(AstLoc.from(p, this), expressionSequence().toAst(p))
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid expression element type") }
 }
@@ -150,20 +150,20 @@ fun NumericLiteralContext.toAst(p: Parser): Double = when {
 
 fun ArrayLiteralContext.toAst(p: Parser) : List<AstExpr> = elementList().singleExpression().map { it.toAst(p) }
 
-fun ObjectLiteralContext.toAst(p: Parser) : AstObjectExpr {
-	val map = HashMap<Any, AstObjectProperty>()
+fun ObjectLiteralContext.toAst(p: Parser) : AstDictExpr {
+	val map = HashMap<Any, AstDictProperty>()
 	propertyNameAndValueList()?.let {
 		it.propertyAssignment().map { it.toAst(p) }
 	}
-	return AstObjectExpr(AstLoc.from(p, this), map)
+	return AstDictExpr(AstLoc.from(p, this), map)
 }
-fun PropertyAssignmentContext.toAst(p: Parser) : AstObjectProperty = when (this) {
-	is PropertyExpressionAssignmentContext	-> AstObjectAssignment(AstLoc.from(p, this), propertyName().toAst(p), singleExpression().toAst(p))
+fun PropertyAssignmentContext.toAst(p: Parser) : AstDictProperty = when (this) {
+	is PropertyExpressionAssignmentContext	-> AstDictAssignment(AstLoc.from(p, this), propertyName().toAst(p), singleExpression().toAst(p))
 // TODO
 //is PropertyGetterContext -> AstObjectGetter(getter().foo, AstBlock(functionBody().sourceElements().toAst(p)))
 //is PropertySetterContext -> AstObjectSetter(setter().foo, propertySetParameterList().text, AstBlock(functionBody().sourceElements().toAst(p)))
-	is PropertyGetterContext -> TODO()
-	is PropertySetterContext -> TODO()
+//	is PropertyGetterContext -> TODO()
+//	is PropertySetterContext -> TODO()
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid property assignment element type") }
 }
 fun PropertyNameContext.toAst(p: Parser) : Any = when {

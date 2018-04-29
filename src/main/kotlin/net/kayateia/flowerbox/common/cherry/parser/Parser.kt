@@ -72,6 +72,10 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("<inline>", """
+var arr = [1,2,3];
+arr[1] = "fooz";
+var arrread = arr[2];
+
 try {
 	var tmp = function() {
 		sys.dbg.println("throwing now!");

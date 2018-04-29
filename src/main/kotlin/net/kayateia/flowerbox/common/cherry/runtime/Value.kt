@@ -76,7 +76,7 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
 	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})})"
 }
 
-class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ArrayValue) -> Value) : Value {
+class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ListValue) -> Value) : Value {
 	override fun toString(): String = "${delegate.javaClass.name}()"
 }
 
@@ -89,11 +89,21 @@ class NullValue : Value {
 	override fun toString(): String = "NullValue()"
 }
 
-class ArrayValue(val arrayValue: List<Value>) : Value {
-	override fun toString(): String = "ArrayValue(${arrayValue.fold("", {a,b -> "$a,$b"})})"
+class ListSetter(val array: ListValue, val key: Int) : RValue, LValue {
+	override fun read(): Any? = array.listValue[key]
+	override fun write(value: Any?) {
+		if (value is Value)
+			array.listValue[key] = value
+		else
+			array.listValue[key] = ConstValue(value)
+	}
 }
 
-class ObjectSetter(val obj: ObjectValue, val key: String) : RValue, LValue {
+class ListValue(val listValue: MutableList<Value>) : Value {
+	override fun toString(): String = "List(${listValue.fold("", {a,b -> "$a,$b"})})"
+}
+
+class DictSetter(val obj: DictValue, val key: String) : RValue, LValue {
 	override fun read(): Any? = obj.read(key)
 
 	override fun write(value: Any?) {
@@ -104,13 +114,13 @@ class ObjectSetter(val obj: ObjectValue, val key: String) : RValue, LValue {
 	}
 }
 
-open class ObjectValue(val map: HashMap<String, Value>, val readOnly: Boolean) : Value {
+open class DictValue(val map: HashMap<String, Value>, val readOnly: Boolean) : Value {
 	fun write(key: String, value: Value) = map.put(key, value)
 	fun read(key: String): Value? =
 		if (readOnly)
 			map[key]
 		else
-			ObjectSetter(this, key)
+			DictSetter(this, key)
 	fun has(key: String) = map.containsKey(key)
 
 	override fun toString(): String = "ObjectValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
@@ -123,8 +133,8 @@ interface StaticObjectValue {
 	val name: String
 }
 
-class NamespaceValue(override val name: String) : StaticObjectValue, ObjectValue(HashMap(), true)
-class ClassValue(val namespace: String, override val name: String, val base: ClassValue) : StaticObjectValue, ObjectValue(HashMap(), true)
+class NamespaceValue(override val name: String) : StaticObjectValue, DictValue(HashMap(), true)
+class ClassValue(val namespace: String, override val name: String, val base: ClassValue) : StaticObjectValue, DictValue(HashMap(), true)
 
 interface FlowControlValue : Value
 
