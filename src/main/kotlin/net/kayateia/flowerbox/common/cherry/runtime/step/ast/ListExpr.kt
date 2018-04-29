@@ -17,11 +17,11 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object ListExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
-		is AstListExpr -> buildArray(runtime, node)
+		is AstListExpr -> buildList(runtime, node)
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName})")
 	}
 
-	private suspend fun buildArray(runtime: Runtime, node: AstListExpr): Value {
+	private suspend fun buildList(runtime: Runtime, node: AstListExpr): Value {
 		val list = mutableListOf<Value>()
 
 		for (e in node.contents) {
