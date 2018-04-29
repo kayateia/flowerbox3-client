@@ -72,9 +72,17 @@ for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
 			val ast = Parser().parse("<inline>", """
-var arr = [1,2,3];
-arr[1] = "fooz";
-var arrread = arr[2];
+
+var testdict = {
+	"foo": 5, "bar": 10, 15: "fooz", doIt: function() { sys.dbg.println("Inside doIt!", self); }
+};
+sys.dbg.println("foo is", testdict.foo);
+sys.dbg.println("15 is", testdict[15]);
+testdict.doIt();
+
+var list = [1,2,3];
+list[1] = "fooz";
+var listread = list[2];
 
 try {
 	var tmp = function() {

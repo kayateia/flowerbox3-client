@@ -45,6 +45,13 @@ interface Value {
 			}
 			else -> value
 		}
+
+		// Converts any value into a Value, taking care not to double-box.
+		fun box(value: Any?): Value = when (value) {
+			null -> NullValue()
+			is Value -> value
+			else -> ConstValue(value)
+		}
 	}
 }
 
@@ -73,7 +80,7 @@ class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
 }
 
 class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
-	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})})"
+	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})}))"
 }
 
 class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ListValue) -> Value) : Value {
@@ -103,8 +110,8 @@ class ListValue(val listValue: MutableList<Value>) : Value {
 	override fun toString(): String = "List(${listValue.fold("", {a,b -> "$a,$b"})})"
 }
 
-class DictSetter(val obj: DictValue, val key: String) : RValue, LValue {
-	override fun read(): Any? = obj.read(key)
+class DictSetter(val obj: DictValue, val key: Any) : RValue, LValue {
+	override fun read(): Any? = obj.map[key]
 
 	override fun write(value: Any?) {
 		if (value is Value)
@@ -114,27 +121,34 @@ class DictSetter(val obj: DictValue, val key: String) : RValue, LValue {
 	}
 }
 
-open class DictValue(val map: HashMap<String, Value>, val readOnly: Boolean) : Value {
-	fun write(key: String, value: Value) = map.put(key, value)
-	fun read(key: String): Value? =
+class DictValue(val map: HashMap<Any, Value>, val readOnly: Boolean) : Value {
+	fun write(key: Any, value: Value) = map.put(key, value)
+	fun read(key: Any): Value? =
 		if (readOnly)
 			map[key]
 		else
 			DictSetter(this, key)
 	fun has(key: String) = map.containsKey(key)
 
+	override fun toString(): String = "DictValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
+}
+
+// A static object is basically a special variant of a read-only, string-keyed dictionary with
+// an associated name and namespace. Only the compiler can create a static, so it should be
+// distinct from just objects. Name should not include the static, and namespace should be
+// formatted.with.dots.
+open class ObjectValue(val name: String) : Value {
+	val map = HashMap<String, Value>()
+
+	fun write(key: String, value: Value) = map.put(key, value)
+	fun read(key: String): Value? = map[key]	// TODO: getters and setters in classes
+	fun has(key: String) = map.containsKey(key)
+
 	override fun toString(): String = "ObjectValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
 }
 
-// A static is basically a special variant of a read-only object with an associated name and namespace.
-// Only the compiler can create a static, so it should be distinct from just objects.
-// Name should not include the static, and namespace should be formatted.with.dots.
-interface StaticObjectValue {
-	val name: String
-}
-
-class NamespaceValue(override val name: String) : StaticObjectValue, DictValue(HashMap(), true)
-class ClassValue(val namespace: String, override val name: String, val base: ClassValue) : StaticObjectValue, DictValue(HashMap(), true)
+class NamespaceValue(val namespace: String) : ObjectValue(namespace)
+class ClassValue(val namespace: String, val className: String, val base: ClassValue) : ObjectValue(namespace)
 
 interface FlowControlValue : Value
 

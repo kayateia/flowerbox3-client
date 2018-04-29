@@ -16,10 +16,11 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object CallExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstCallExpr -> {
-			val func = Value.root(Step.exec(runtime, node.left))
+			val funcOrig = Step.exec(runtime, node.left)
+			val func = Value.root(funcOrig)
 			runtime.lexicalPush(node).use {
 				when (func) {
-					is FuncValue -> executeCherry(runtime, node, func)
+					is FuncValue -> executeCherry(runtime, node, func, funcOrig)
 					is IntrinsicValue -> executeNative(runtime, node, func)
 					else -> throw Exception("can't execute a non-function (${func})")
 				}
@@ -34,7 +35,7 @@ object CallExpr : Step {
 		}.toMutableList())
 	}
 
-	private suspend fun executeCherry(runtime: Runtime, node: AstCallExpr, func: FuncValue): Value {
+	private suspend fun executeCherry(runtime: Runtime, node: AstCallExpr, func: FuncValue, funcOrig: Value): Value {
 		val args = getArgs(runtime, node)
 		val paramScope = MapScope(func.capturedScope)
 		paramScope.setLocal("arguments", args)
@@ -45,6 +46,13 @@ object CallExpr : Step {
 		func.funcNode.params?.forEach {
 			if (!paramScope.hasLocal(it))
 				paramScope.setLocal(it, NullValue())
+		}
+
+		// TODO - Will need to handle for classes later too.
+		if (funcOrig is DictSetter) {
+			paramScope.setLocal("self", funcOrig.obj)
+		} else {
+			paramScope.setLocal("self", NullValue())
 		}
 
 		runtime.scopePush(paramScope).use {

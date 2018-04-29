@@ -9,6 +9,8 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 
 import net.kayateia.flowerbox.common.cherry.parser.AstIdExpr
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
+import net.kayateia.flowerbox.common.cherry.parser.AstSelfExpr
+import net.kayateia.flowerbox.common.cherry.runtime.NullValue
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.ScopeLValue
 import net.kayateia.flowerbox.common.cherry.runtime.Value
@@ -21,6 +23,12 @@ object IdExpr : Step {
 				ScopeLValue(runtime.scope, node.id)
 			else
 				throw Exception("undeclared variable ${node.id}")
+		}
+		is AstSelfExpr -> {
+			if (runtime.scope.has("self"))
+				Value.box(runtime.scope.get("self"))
+			else
+				NullValue()
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}

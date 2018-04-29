@@ -169,7 +169,7 @@ grammar Cherry;
             case Identifier:
             case NullLiteral:
             case BooleanLiteral:
-            case This:
+            case Self:
             case CloseBracket:
             case CloseParen:
             case OctalIntegerLiteral:
@@ -477,8 +477,8 @@ propertyNameAndValueList
 ///     set PropertyName ( PropertySetParameterList ) { FunctionBody }
 propertyAssignment
  : propertyName ':' singleExpression                            # PropertyExpressionAssignment
- | getter '(' ')' '{' functionBody '}'                          # PropertyGetter
- | setter '(' propertySetParameterList ')' '{' functionBody '}' # PropertySetter
+// | getter '(' ')' '{' functionBody '}'                          # PropertyGetter
+// | setter '(' propertySetParameterList ')' '{' functionBody '}' # PropertySetter
  ;
 
 /// PropertyName :
@@ -493,9 +493,9 @@ propertyName
 
 /// PropertySetParameterList :
 ///     Identifier
-propertySetParameterList
- : Identifier
- ;
+//propertySetParameterList
+// : Identifier
+// ;
 
 /// Arguments :
 ///     ( )
@@ -619,7 +619,7 @@ argumentList
 ///     function Identifier? ( FormalParameterList? ) { FunctionBody }
 ///
 /// PrimaryExpression :
-///     this
+///     self
 ///     Identifier
 ///     Literal
 ///     ArrayLiteral
@@ -662,7 +662,7 @@ singleExpression
  | singleExpression '?' singleExpression ':' singleExpression             # TernaryExpression
  | singleExpression '=' singleExpression                                  # AssignmentExpression
  | singleExpression assignmentOperator singleExpression                   # AssignmentOperatorExpression
- | This                                                                   # ThisExpression
+ | Self                                                                   # SelfExpression
  | Identifier                                                             # IdentifierExpression
  | literal                                                                # LiteralExpression
  | arrayLiteral                                                           # ArrayLiteralExpression
@@ -733,7 +733,7 @@ keyword
  | While
  | Debugger
  | Function
- | This
+ | Self
  | With
  | Default
  | If
@@ -887,7 +887,7 @@ Switch     : 'switch';
 While      : 'while';
 Debugger   : 'debugger';
 Function   : 'function';
-This       : 'this';
+Self       : 'self';
 With       : 'with';
 Default    : 'default';
 If         : 'if';

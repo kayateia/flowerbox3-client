@@ -22,6 +22,7 @@ object DotExpr : Step {
 				// TODO - insert special logic here for primitive methods. (num.toString, etc)
 				when (left) {
 					is DictValue -> DictSetter(left, node.member)
+					is ObjectValue -> left.map[node.member] ?: NullValue()
 					else -> throw Exception("can't dot-notation a non-object ($left)")
 				}
 			}

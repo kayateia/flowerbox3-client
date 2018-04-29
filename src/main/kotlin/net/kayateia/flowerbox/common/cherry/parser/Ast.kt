@@ -99,15 +99,12 @@ data class AstUnaryExpr(override val loc: AstLoc, override val op: String, overr
 data class AstBinaryExpr(override val loc: AstLoc, override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
 data class AstLazyBinaryExpr(override val loc: AstLoc, override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
 data class AstTernaryExpr(override val loc: AstLoc, val cond: AstExpr, val ifTrue: AstExpr, val ifFalse: AstExpr) : AstExpr
-data class AstThisExpr(override val loc: AstLoc) : AstExpr
+data class AstSelfExpr(override val loc: AstLoc) : AstExpr
 data class AstIdExpr(override val loc: AstLoc, val id: String) : AstExpr
 data class AstLiteralExpr(override val loc: AstLoc, val value: Any?) : AstExpr
 data class AstListExpr(override val loc: AstLoc, val contents: List<AstExpr>) : AstExpr
-data class AstDictExpr(override val loc: AstLoc, val value: Map<Any, AstDictProperty>) : AstExpr
+data class AstDictExpr(override val loc: AstLoc, val values: List<AstDictAssignment>) : AstExpr
 data class AstExprListExpr(override val loc: AstLoc, val exprs: List<AstExpr>) : AstExpr
 
 // Dictionary definition
-interface AstDictProperty : AstNode
-data class AstDictAssignment(override val loc: AstLoc, val name: Any, val value: AstExpr) : AstDictProperty
-//data class AstObjectGetter(override val loc: AstLoc, val name: String, val block: AstBlock) : AstObjectProperty
-//data class AstObjectSetter(override val loc: AstLoc, val name: String, val param: String, val block: AstBlock) : AstObjectProperty
+data class AstDictAssignment(override val loc: AstLoc, val name: Any, val value: AstExpr) : AstNode

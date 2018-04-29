@@ -35,8 +35,8 @@ object IndexExpr : Step {
 	}
 
 	private fun objectIndex(left: DictValue, index: Any?): Value = when (index) {
-		is String -> DictSetter(left, index)
-		else -> throw Exception("can't index object with value $index")
+		null -> throw Exception("can't index object with null")
+		else -> DictSetter(left, index)
 	}
 
 	private fun arrayIndex(left: ListValue, index: Any?): Value = when (index) {

@@ -59,12 +59,12 @@ interface Step {
 			is AstBinaryExpr			-> BinaryExpr
 			is AstLazyBinaryExpr		-> LazyBinaryExpr
 			is AstTernaryExpr			-> TODO()
-			is AstThisExpr				-> TODO()
+			is AstSelfExpr				-> IdExpr
 			is AstIdExpr				-> IdExpr
 			is AstLiteralExpr			-> LiteralExpr
 			is AstExprListExpr			-> ExprListExpr
 			is AstListExpr				-> ListExpr
-			is AstDictExpr				-> TODO()
+			is AstDictExpr				-> DictExpr
 
 			else -> {
 				throw Exception("invalid step type ${node.javaClass.canonicalName}")
