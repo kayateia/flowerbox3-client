@@ -108,3 +108,22 @@ data class AstExprListExpr(override val loc: AstLoc, val exprs: List<AstExpr>) :
 
 // Dictionary definition
 data class AstDictAssignment(override val loc: AstLoc, val name: Any, val value: AstExpr) : AstNode
+
+// Classes
+data class AstNamespace(override val loc: AstLoc, val fqcn: String) : AstStatement
+data class AstClassDecl(override val loc: AstLoc, val name: String, val base: String?, val body: List<AstClassBodyDecl>) : AstStatement
+
+enum class AstScopeType {
+	PUBLIC, PRIVATE, PROTECTED
+}
+enum class AstAccessorType {
+	GET, SET
+}
+interface AstClassBodyDecl {
+	val scope: AstScopeType
+}
+
+data class AstMethodDecl(override val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val body: AstFuncDecl) : AstNode, AstClassBodyDecl
+data class AstFieldDecl(override val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val decls: List<AstVarDecl>) : AstNode, AstClassBodyDecl
+data class AstAccessorDecl(override  val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val type: AstAccessorType, val name: String, val arg: String?, val body: List<AstStatement>) : AstNode, AstClassBodyDecl
+

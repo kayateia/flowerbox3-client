@@ -73,6 +73,23 @@ for (i = 0; i <= 16; i++)
 		""") */
 			val ast = Parser().parse("<inline>", """
 
+namespace foo.bar.baz;
+
+class test : a.b.woot {
+	public a = 10, b = 5;
+	public static c = 6;
+
+	protected foo(a, b, c) {
+		return c;
+	}
+
+	private get woot() {
+	}
+	private static set fooz(val) {
+	}
+}
+
+
 var testdict = {
 	"foo": 5, "bar": 10, 15: "fooz", doIt: function() { sys.dbg.println("Inside doIt!", self); }
 };

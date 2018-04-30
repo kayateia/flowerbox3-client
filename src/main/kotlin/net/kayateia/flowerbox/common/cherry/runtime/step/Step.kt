@@ -66,6 +66,9 @@ interface Step {
 			is AstListExpr				-> ListExpr
 			is AstDictExpr				-> DictExpr
 
+			is AstNamespace				-> TODO()
+			is AstClassDecl				-> TODO()
+
 			else -> {
 				throw Exception("invalid step type ${node.javaClass.canonicalName}")
 			}

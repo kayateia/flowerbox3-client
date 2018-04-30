@@ -17,6 +17,8 @@ fun SourceElementContext.toAst(p: Parser): AstStatement {
 	return when (this) {
 		is SourceElementStatementContext -> statement().toAst(p)
 		is SourceElementFunctionDeclContext -> functionDeclaration().toAst(p)
+		is SourceElementNamespaceDeclContext -> namespaceDeclaration().toAst(p)
+		is SourceElementClassDeclContext -> classDeclaration().toAst(p)
 		else -> {
 			println("${this.text}, ${this.javaClass.canonicalName}")
 			throw Exception("invalid source element type")
@@ -168,10 +170,46 @@ fun PropertyNameContext.toAst(p: Parser) : Any = when {
 	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid property name element type") }
 }
 
-fun FunctionDeclarationContext.toAst(p: Parser): AstFuncDecl {
-	val funcExpr = AstFuncExpr(AstLoc.from(p, this), Identifier().text, (formalParameterList()?.toAst(p)) ?: listOf(), AstBlock(AstLoc.from(p, this), listOf()))
+fun FunctionDeclarationContext.toAst(p: Parser): AstFuncDecl = functionDeclarationPostFunction().toAst(p)
+fun FunctionDeclarationPostFunctionContext.toAst(p: Parser): AstFuncDecl {
+	val funcExpr = AstFuncExpr(
+		AstLoc.from(p, this),
+		Identifier().text,
+		(formalParameterList()?.toAst(p)) ?: listOf(),
+		AstBlock(AstLoc.from(p, this), listOf()))
 	p.functionPush(funcExpr)
 	funcExpr.body = AstBlock(funcExpr.body.loc, functionBody().sourceElements().toAst(p))
 	p.functionPop(funcExpr)
 	return AstFuncDecl(AstLoc.from(p, this), funcExpr)
 }
+
+fun NamespaceDeclarationContext.toAst(p: Parser): AstNamespace =
+	AstNamespace(AstLoc.from(p, this), fqcn().text)
+
+fun ClassDeclarationContext.toAst(p: Parser): AstClassDecl =
+	AstClassDecl(AstLoc.from(p, this), Identifier().text, fqcn()?.text, (classBody()?.classBodyDeclaration()?.map { it.toAst(p) }) ?: listOf())
+
+fun ClassBodyDeclarationContext.toAst(p: Parser): AstClassBodyDecl = when (this) {
+	is MethodDeclContext -> methodDeclaration().toAst(p)
+	is FieldDeclContext -> fieldDeclaration().toAst(p)
+	is AccessorDeclContext -> accessorDeclaration().toAst(p)
+	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid class declaration item") }
+}
+
+fun MethodDeclarationContext.toAst(p: Parser): AstMethodDecl =
+	AstMethodDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, functionDeclarationPostFunction().toAst(p))
+
+fun FieldDeclarationContext.toAst(p: Parser): AstFieldDecl =
+	AstFieldDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, variableDeclarationList().toAst(p))
+
+fun AccessorDeclarationContext.toAst(p: Parser): AstAccessorDecl = when (this) {
+	is GetAccessorDeclContext -> getAccessor().toAst(p)
+	is SetAccessorDeclContext -> setAccessor().toAst(p)
+	else -> { println("${this.text}, ${this.javaClass.canonicalName}");  throw Exception("invalid class declaration item") }
+}
+
+fun GetAccessorContext.toAst(p: Parser): AstAccessorDecl =
+	AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, AstAccessorType.GET, Identifier().text, null, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())
+
+fun SetAccessorContext.toAst(p: Parser): AstAccessorDecl =
+		AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, AstAccessorType.SET, Identifier()[0].text, Identifier()[1].text, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())

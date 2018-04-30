@@ -102,33 +102,8 @@ grammar Cherry;
 }
 
 @lexer::members {
-
-    // A flag indicating if the lexer should operate in strict mode.
-    // When set to true, FutureReservedWords are tokenized, when false,
-    // an octal literal can be tokenized.
-    private boolean strictMode = true;
-
     // The most recently produced token.
     private Token lastToken = null;
-
-    /**
-     * Returns {@code true} iff the lexer operates in strict mode.
-     *
-     * @return {@code true} iff the lexer operates in strict mode.
-     */
-    public boolean getStrictMode() {
-        return this.strictMode;
-    }
-
-    /**
-     * Sets whether the lexer operates in strict mode or not.
-     *
-     * @param strictMode
-     *         the flag indicating the lexer operates in strict mode or not.
-     */
-    public void setStrictMode(boolean strictMode) {
-        this.strictMode = strictMode;
-    }
 
     /**
      * Return the next token from the character stream and records this last
@@ -206,6 +181,8 @@ sourceElements
 sourceElement
  : statement                # sourceElementStatement
  | functionDeclaration      # sourceElementFunctionDecl
+ | namespaceDeclaration     # sourceElementNamespaceDecl
+ | classDeclaration         # sourceElementClassDecl
  ;
 
 /// Statement :
@@ -417,7 +394,11 @@ debuggerStatement
 /// FunctionDeclaration :
 ///     function Identifier ( FormalParameterList? ) { FunctionBody }
 functionDeclaration
- : Function Identifier '(' formalParameterList? ')' '{' functionBody '}'
+ : Function functionDeclarationPostFunction
+ ;
+
+functionDeclarationPostFunction
+ : Identifier '(' formalParameterList? ')' '{' functionBody '}'
  ;
 
 /// FormalParameterList :
@@ -509,6 +490,55 @@ arguments
 ///     ArgumentList , AssignmentExpression
 argumentList
  : singleExpression ( ',' singleExpression )*
+ ;
+
+namespaceDeclaration
+ : Namespace fqcn eos
+ ;
+
+classDeclaration
+ : Class Identifier ( ':' fqcn )? '{' classBody '}'
+ ;
+
+fqcn
+ : Identifier ( '.' Identifier )*
+ ;
+
+classBody
+ : classBodyDeclaration*
+ ;
+
+classBodyDeclaration
+ : methodDeclaration                         # MethodDecl
+ | fieldDeclaration                          # FieldDecl
+ | accessorDeclaration                       # AccessorDecl
+ ;
+
+methodDeclaration
+ : scopeSpecifier ( Static )? functionDeclarationPostFunction
+ ;
+
+fieldDeclaration
+ : scopeSpecifier ( Static )? variableDeclarationList eos
+ ;
+
+accessorDeclaration
+ : getAccessor                              # GetAccessorDecl
+ | setAccessor                              # SetAccessorDecl
+ ;
+
+getAccessor
+ : scopeSpecifier ( Static )? Get Identifier '(' ')' '{' functionBody '}'
+ ;
+
+setAccessor
+ : scopeSpecifier ( Static )? Set Identifier '(' Identifier ')' '{' functionBody '}'
+ ;
+
+scopeSpecifier
+ : Public
+ | Private
+ | Protected
  ;
 
 /// Expression :
@@ -741,24 +771,21 @@ keyword
  | Delete
  | In
  | Try
+ | Class
+ | Const
+ | Private
+ | Public
+ | Protected
+ | Static
  ;
 
 futureReservedWord
- : Class
- | Enum
- | Extends
- | Super
- | Const
- | Export
- | Import
- | Implements
- | Let
- | Private
- | Public
- | Interface
- | Package
- | Protected
- | Static
+// | Enum
+// | Extends
+// | Super
+// | Export
+// | Import
+ : Interface
  | Yield
  ;
 
@@ -865,7 +892,7 @@ HexIntegerLiteral
  ;
 
 OctalIntegerLiteral
- : {!strictMode}? '0' OctalDigit+
+ : '0' OctalDigit+
  ;
 
 /// 7.6.1.1 Keywords
@@ -896,26 +923,27 @@ Delete     : 'delete';
 In         : 'in';
 Try        : 'try';
 
-/// 7.6.1.2 Future Reserved Words
-Class   : 'class';
-Enum    : 'enum';
-Extends : 'extends';
-Super   : 'super';
-Const   : 'const';
-Export  : 'export';
-Import  : 'import';
+// Cherry keywords
+Class      : 'class';
+Base       : 'base';
+Const      : 'const';
+Namespace  : 'namespace';
+Using      : 'using';
+Private    : 'private';
+Public     : 'public';
+Protected  : 'protected';
+Static     : 'static';
+Get        : 'get';
+Set        : 'set';
 
-/// The following tokens are also considered to be FutureReservedWords
-/// when parsing strict mode
-Implements : {strictMode}? 'implements';
-Let        : {strictMode}? 'let';
-Private    : {strictMode}? 'private';
-Public     : {strictMode}? 'public';
-Interface  : {strictMode}? 'interface';
-Package    : {strictMode}? 'package';
-Protected  : {strictMode}? 'protected';
-Static     : {strictMode}? 'static';
-Yield      : {strictMode}? 'yield';
+/// 7.6.1.2 Future Reserved Words
+//Enum    : 'enum';
+//Extends : 'extends';
+//Super   : 'super';
+//Export  : 'export';
+//Import  : 'import';
+Interface  : 'interface';
+Yield      : 'yield';
 
 /// 7.6 Identifier Names and Identifiers
 Identifier
