@@ -7,12 +7,17 @@
 
 package net.kayateia.flowerbox.client
 
+import net.kayateia.flowerbox.common.cherry.parser.Parser
+import net.kayateia.flowerbox.common.cherry.runtime.DictValue
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.util.vector.*
 import java.util.*
 import kotlin.concurrent.thread
+
+typealias CherryRuntime = net.kayateia.flowerbox.common.cherry.runtime.Runtime
 
 object Renderer {
 	// How many chunks we'll render in our small world.
@@ -26,6 +31,32 @@ object Renderer {
 
 	// Queue of chunks that remain to be turned into VAO/VBOs.
 	private val chunkRenderQueue: Queue<Chunk> = ArrayDeque<Chunk>()
+
+	private val lightingProgramData = DictValue(HashMap(), false)
+	private val lightingProgram = """
+		data.i = (data.i + 1) % 360;
+
+		var rads = data.i * 3.1415 / 180.0;
+		data.x = 50.0 * sys.math.cos(rads);
+		data.y = 50.0 * sys.math.sin(rads);
+	"""
+	private var lightingProgramRuntime: CherryRuntime? = null
+
+	init {
+		lightingProgramData.map.put("i", Value.box(0.0))
+
+		val ast = Parser().parse("<inline>", lightingProgram)
+		lightingProgramRuntime = CherryRuntime(ast)
+		lightingProgramRuntime!!.scope.set("data", lightingProgramData)
+	}
+
+	private fun lightingProgramPerFrame() {
+		lightingProgramRuntime!!.execute(10000)
+		glUniform3f(lightPositionLocation,
+			(Value.prim(lightingProgramData.read("x")) as Double).toFloat(),
+			30f,
+			(Value.prim(lightingProgramData.read("y")) as Double).toFloat())
+	}
 
 	// Called once, in the render loop.
 	fun setup(w: Int, h: Int) {
@@ -147,7 +178,7 @@ object Renderer {
 
 		// Set some default lighting.
 		glUniform3f(lightColorLocation, 0.5f, 0.5f, 0.5f)
-		glUniform3f(lightPositionLocation, 15f, 30f, 15f)
+		glUniform3f(lightPositionLocation, 15f, 30f, 0f)
 		glUniform1f(ambientLocation, 0.7f)
 
 		// And textures.
@@ -217,6 +248,8 @@ object Renderer {
 		matrix44buffer.flip()
 		glUniformMatrix4fv(viewMatrixLocation, false, matrix44buffer)
 		loadModel()
+
+		lightingProgramPerFrame()
 
 		glUseProgram(0)
 
