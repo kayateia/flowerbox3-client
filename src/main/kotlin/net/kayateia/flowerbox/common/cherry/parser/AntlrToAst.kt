@@ -15,10 +15,11 @@ fun ProgramContext.toAst(p: Parser): AstProgram = AstProgram(AstLoc.from(p, this
 fun SourceElementsContext.toAst(p: Parser): List<AstStatement> = sourceElement().map { it.toAst(p) }
 fun SourceElementContext.toAst(p: Parser): AstStatement {
 	return when (this) {
-		is SourceElementStatementContext -> statement().toAst(p)
-		is SourceElementFunctionDeclContext -> functionDeclaration().toAst(p)
-		is SourceElementNamespaceDeclContext -> namespaceDeclaration().toAst(p)
-		is SourceElementClassDeclContext -> classDeclaration().toAst(p)
+		is SourceElementStatementContext		-> statement().toAst(p)
+		is SourceElementFunctionDeclContext		-> functionDeclaration().toAst(p)
+		is SourceElementNamespaceDeclContext	-> namespaceDeclaration().toAst(p)
+		is SourceElementClassDeclContext		-> classDeclaration().toAst(p)
+		is SourceElementUsingDeclContext		-> usingDeclaration().toAst(p)
 		else -> {
 			println("${this.text}, ${this.javaClass.canonicalName}")
 			throw Exception("invalid source element type")
@@ -185,6 +186,9 @@ fun FunctionDeclarationPostFunctionContext.toAst(p: Parser): AstFuncDecl {
 
 fun NamespaceDeclarationContext.toAst(p: Parser): AstNamespace =
 	AstNamespace(AstLoc.from(p, this), fqcn().text)
+
+fun UsingDeclarationContext.toAst(p: Parser): AstUsing =
+	AstUsing(AstLoc.from(p, this), fqcnWithWildcard().text)
 
 fun ClassDeclarationContext.toAst(p: Parser): AstClassDecl =
 	AstClassDecl(AstLoc.from(p, this), Identifier().text, fqcn()?.text, (classBody()?.classBodyDeclaration()?.map { it.toAst(p) }) ?: listOf())

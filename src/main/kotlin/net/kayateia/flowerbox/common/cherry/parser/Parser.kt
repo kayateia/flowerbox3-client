@@ -75,6 +75,8 @@ for (i = 0; i <= 16; i++)
 
 namespace foo.bar.baz;
 
+using c.d.*;
+
 class test : a.b.woot {
 	public a = 10, b = 5;
 	public static c = 6;

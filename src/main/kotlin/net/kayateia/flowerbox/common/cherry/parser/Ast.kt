@@ -109,8 +109,11 @@ data class AstExprListExpr(override val loc: AstLoc, val exprs: List<AstExpr>) :
 // Dictionary definition
 data class AstDictAssignment(override val loc: AstLoc, val name: Any, val value: AstExpr) : AstNode
 
-// Classes
+// Namespaces
 data class AstNamespace(override val loc: AstLoc, val fqcn: String) : AstStatement
+data class AstUsing(override val loc: AstLoc, val fqcn: String) : AstStatement
+
+// Classes
 data class AstClassDecl(override val loc: AstLoc, val name: String, val base: String?, val body: List<AstClassBodyDecl>) : AstStatement
 
 enum class AstScopeType {

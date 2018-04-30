@@ -183,6 +183,7 @@ sourceElement
  | functionDeclaration      # sourceElementFunctionDecl
  | namespaceDeclaration     # sourceElementNamespaceDecl
  | classDeclaration         # sourceElementClassDecl
+ | usingDeclaration         # sourceElementUsingDecl
  ;
 
 /// Statement :
@@ -496,12 +497,20 @@ namespaceDeclaration
  : Namespace fqcn eos
  ;
 
+usingDeclaration
+ : Using fqcnWithWildcard eos
+ ;
+
 classDeclaration
  : Class Identifier ( ':' fqcn )? '{' classBody '}'
  ;
 
 fqcn
  : Identifier ( '.' Identifier )*
+ ;
+
+fqcnWithWildcard
+ : fqcn Wildcard?
  ;
 
 classBody
@@ -894,6 +903,8 @@ HexIntegerLiteral
 OctalIntegerLiteral
  : '0' OctalDigit+
  ;
+
+Wildcard                   : '.*';
 
 /// 7.6.1.1 Keywords
 Break      : 'break';

@@ -67,6 +67,7 @@ interface Step {
 			is AstDictExpr				-> DictExpr
 
 			is AstNamespace				-> TODO()
+			is AstUsing					-> TODO()
 			is AstClassDecl				-> TODO()
 
 			else -> {
