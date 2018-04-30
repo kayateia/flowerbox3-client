@@ -78,6 +78,7 @@ namespace foo.bar.baz;
 using c.d.*;
 
 class test : a.b.woot {
+	external foo_texture;
 	public a = 10, b = 5;
 	public static c = 6;
 

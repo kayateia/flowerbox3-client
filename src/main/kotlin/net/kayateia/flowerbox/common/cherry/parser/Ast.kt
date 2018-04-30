@@ -117,7 +117,7 @@ data class AstUsing(override val loc: AstLoc, val fqcn: String) : AstStatement
 data class AstClassDecl(override val loc: AstLoc, val name: String, val base: String?, val body: List<AstClassBodyDecl>) : AstStatement
 
 enum class AstScopeType {
-	PUBLIC, PRIVATE, PROTECTED
+	PUBLIC, PRIVATE, PROTECTED, EXTERNAL
 }
 enum class AstAccessorType {
 	GET, SET

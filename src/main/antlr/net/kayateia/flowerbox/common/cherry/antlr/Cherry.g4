@@ -544,10 +544,12 @@ setAccessor
  : scopeSpecifier ( Static )? Set Identifier '(' Identifier ')' '{' functionBody '}'
  ;
 
+// Technically 'external' only applies to field declarations, but we can error this at a higher level.
 scopeSpecifier
  : Public
  | Private
  | Protected
+ | External
  ;
 
 /// Expression :
@@ -946,6 +948,7 @@ Protected  : 'protected';
 Static     : 'static';
 Get        : 'get';
 Set        : 'set';
+External   : 'external';
 
 /// 7.6.1.2 Future Reserved Words
 //Enum    : 'enum';
