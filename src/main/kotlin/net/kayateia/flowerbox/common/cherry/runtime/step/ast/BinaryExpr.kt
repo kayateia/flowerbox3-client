@@ -23,43 +23,43 @@ object BinaryExpr : Step {
 				if (right is ThrownValue)
 					right
 				else
-					opExec(node.op, left, right)
+					opExec(runtime, node.op, left, right)
 			}
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 
-	private fun opExecNum(left: Value, right: Value, op: (left: Double, right: Double) -> Double) =
-		ConstValue(op(Coercion.toNum(Value.prim(left)), Coercion.toNum(Value.prim(right))))
+	private suspend fun opExecNum(runtime: Runtime, left: Value, right: Value, op: (left: Double, right: Double) -> Double) =
+		ConstValue(op(Coercion.toNum(Value.prim(runtime, left)), Coercion.toNum(Value.prim(runtime, right))))
 
-	private fun opExecNumBool(left: Value, right: Value, op: (left: Double, right: Double) -> Boolean) =
-		ConstValue(op(Coercion.toNum(Value.prim(left)), Coercion.toNum(Value.prim(right))))
+	private suspend fun opExecNumBool(runtime: Runtime, left: Value, right: Value, op: (left: Double, right: Double) -> Boolean) =
+		ConstValue(op(Coercion.toNum(Value.prim(runtime, left)), Coercion.toNum(Value.prim(runtime, right))))
 
-	private fun opExec(op: String, left: Value, right: Value): Value = when (op) {
-		"*" -> opExecNum(left, right) { l, r -> l * r }
-		"/" -> opExecNum(left, right) { l, r -> l / r }
-		"%" -> opExecNum(left, right) { l, r -> l % r }
+	private suspend fun opExec(runtime: Runtime, op: String, left: Value, right: Value): Value = when (op) {
+		"*" -> opExecNum(runtime, left, right) { l, r -> l * r }
+		"/" -> opExecNum(runtime, left, right) { l, r -> l / r }
+		"%" -> opExecNum(runtime, left, right) { l, r -> l % r }
 		"+" -> {
-			val leftPrim = Value.prim(left)
-			val rightPrim = Value.prim(right)
+			val leftPrim = Value.prim(runtime, left)
+			val rightPrim = Value.prim(runtime, right)
 			if (leftPrim is String || rightPrim is String) {
 				ConstValue(Coercion.toString(leftPrim) + Coercion.toString(rightPrim))
 			} else {
-				opExecNum(left, right) { l, r -> l + r }
+				opExecNum(runtime, left, right) { l, r -> l + r }
 			}
 		}
-		"-" -> opExecNum(left, right) { l, r -> l - r }
-		"<" -> opExecNumBool(left, right) { l, r -> l < r }
-		"<=" -> opExecNumBool(left, right) { l, r -> l <= r }
-		">" -> opExecNumBool(left, right) { l, r -> l > r }
-		">=" -> opExecNumBool(left, right) { l, r -> l >= r }
+		"-" -> opExecNum(runtime, left, right) { l, r -> l - r }
+		"<" -> opExecNumBool(runtime, left, right) { l, r -> l < r }
+		"<=" -> opExecNumBool(runtime, left, right) { l, r -> l <= r }
+		">" -> opExecNumBool(runtime, left, right) { l, r -> l > r }
+		">=" -> opExecNumBool(runtime, left, right) { l, r -> l >= r }
 
-		"==" -> ConstValue(Value.compare(left, right))
+		"==" -> ConstValue(Value.compare(runtime, left, right))
 		"=" -> {
 			when (left) {
 				is LValue -> {
-					val simplified = Value.root(right)
-					left.write(simplified)
+					val simplified = Value.root(runtime, right)
+					left.write(runtime, simplified)
 					simplified
 				}
 				else -> throw Exception("can't assign to RValue")

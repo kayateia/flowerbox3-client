@@ -22,7 +22,8 @@ object IdExpr : Step {
 			if (runtime.scope.has(node.id))
 				ScopeLValue(runtime.scope, node.id)
 			else
-				throw Exception("undeclared variable ${node.id}")
+				runtime.library.lookup(node.id, listOf(runtime.currentNamespace) + runtime.nsUsings)
+					?: throw Exception("undeclared variable ${node.id}")
 		}
 		is AstSelfExpr -> {
 			if (runtime.scope.has("self"))

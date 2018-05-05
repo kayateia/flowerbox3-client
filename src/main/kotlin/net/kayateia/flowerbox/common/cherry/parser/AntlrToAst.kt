@@ -96,7 +96,7 @@ fun SingleExpressionContext.toAst(p: Parser): AstExpr = when(this) {
 	is MemberIndexExpressionContext			-> AstIndexExpr(AstLoc.from(p, this), singleExpression().toAst(p), expressionSequence().toAst(p))
 	is MemberDotExpressionContext			-> AstDotExpr(AstLoc.from(p, this), singleExpression().toAst(p), identifierName().text)
 	is ArgumentsExpressionContext			-> AstCallExpr(AstLoc.from(p, this), singleExpression().toAst(p), arguments().toAst(p))
-	is NewExpressionContext					-> AstNewExpr(AstLoc.from(p, this), singleExpression().toAst(p), arguments().toAst(p))
+	is NewExpressionContext					-> AstNewExpr(AstLoc.from(p, this), fqcn().text, arguments().toAst(p))
 	is PostIncrementExpressionContext		-> AstPostExpr(AstLoc.from(p, this), getChild(1).text, singleExpression().toAst(p))
 	is PostDecreaseExpressionContext		-> AstPostExpr(AstLoc.from(p, this), getChild(1).text, singleExpression().toAst(p))
 	is DeleteExpressionContext				-> AstDeleteExpr(AstLoc.from(p, this), singleExpression().toAst(p))

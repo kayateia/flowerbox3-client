@@ -26,14 +26,14 @@ object PrePostExpr : Step {
 		return when (left) {
 			is ThrownValue -> left
 			is LValue -> {
-				val orig = Value.prim(left)
+				val orig = Value.prim(runtime, left)
 
 				val newVal = when (op) {
 					"--" -> Coercion.toNum(orig) - 1
 					"++" -> Coercion.toNum(orig) + 1
 					else -> throw Exception("invalid post-operator $op")
 				}
-				left.write(newVal)
+				left.write(runtime, newVal)
 
 				if (preValue)
 					ConstValue(orig)

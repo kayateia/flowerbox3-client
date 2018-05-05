@@ -25,7 +25,7 @@ object DictExpr : Step {
 		val map = HashMap<Any, Value>()
 
 		for (p in node.values) {
-			val expr = Value.root(Step.exec(runtime, p.value))
+			val expr = Value.root(runtime, Step.exec(runtime, p.value))
 			if (expr is ThrownValue)
 				return expr
 

@@ -25,7 +25,7 @@ object ListExpr : Step {
 		val list = mutableListOf<Value>()
 
 		for (e in node.contents) {
-			val expr = Value.root(Step.exec(runtime, e))
+			val expr = Value.root(runtime, Step.exec(runtime, e))
 			if (expr is ThrownValue)
 				return expr
 

@@ -51,11 +51,11 @@ object Renderer {
 	}
 
 	private fun lightingProgramPerFrame() {
-		lightingProgramRuntime!!.execute(10000)
+		/*lightingProgramRuntime!!.execute(10000)
 		glUniform3f(lightPositionLocation,
 			(Value.prim(lightingProgramData.read("x")) as Double).toFloat(),
 			30f,
-			(Value.prim(lightingProgramData.read("y")) as Double).toFloat())
+			(Value.prim(lightingProgramData.read("y")) as Double).toFloat()) */
 	}
 
 	// Called once, in the render loop.

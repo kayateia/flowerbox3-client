@@ -16,7 +16,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 
 object ThrowStmt : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
-		is AstThrowStmt -> ThrownValue(Value.root(Step.execList(runtime, node.exprs)))
+		is AstThrowStmt -> ThrownValue(Value.root(runtime, Step.execList(runtime, node.exprs)))
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 }

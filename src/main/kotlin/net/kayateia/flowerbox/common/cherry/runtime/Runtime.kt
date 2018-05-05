@@ -27,11 +27,14 @@ class Runtime(val program: AstProgram) {
 	var result: Any? = null
 	var exception: Throwable? = null
 
+	var currentNamespace: String = ""
+	var nsUsings: MutableList<String> = mutableListOf()
+
 	val library = Library()
 
 	init {
 		scopeStack.constScope.setLibrary(library)
-		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ListValue -> testFunc(implicits, args) }))
+		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ListValue -> testFunc(implicits, args) }, null))
 	}
 
 	fun testFunc(implicits: Scope, args: ListValue): Value {

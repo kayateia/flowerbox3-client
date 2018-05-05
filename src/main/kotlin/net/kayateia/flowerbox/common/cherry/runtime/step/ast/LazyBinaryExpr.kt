@@ -22,18 +22,18 @@ object LazyBinaryExpr : Step {
 				when (node.op) {
 					// Only the || operator does the weird value passing thing.
 					"||" -> {
-						if (Value.bool(left))
+						if (Value.bool(runtime, left))
 							left
 						else {
 							val right = Step.exec(runtime, node.right)
 							if (right is FlowControlValue)
 								right
 							else
-								Value.root(right)
+								Value.root(runtime, right)
 						}
 					}
 					"&&" -> {
-						if (Value.bool(left)) {
+						if (Value.bool(runtime, left)) {
 							val right = Step.exec(runtime, node.right)
 							if (right is FlowControlValue)
 								right

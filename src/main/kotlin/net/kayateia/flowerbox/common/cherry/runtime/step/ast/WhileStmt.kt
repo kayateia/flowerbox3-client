@@ -22,7 +22,7 @@ object WhileStmt : Step {
 		var needCheck = checkBefore
 		while (true) {
 			if (needCheck) {
-				val condValue = Coercion.toBool(Value.prim(Step.execList(runtime, exprs)))
+				val condValue = Coercion.toBool(Value.prim(runtime, Step.execList(runtime, exprs)))
 				if (!condValue)
 					return NullValue()
 			}
@@ -31,7 +31,7 @@ object WhileStmt : Step {
 			val bodyValue = Step.exec(runtime, stmt)
 			if (bodyValue is FlowControlValue) {
 				when (bodyValue) {
-					is ReturnValue		-> return Value.root(bodyValue.returnValue)
+					is ReturnValue		-> return Value.root(runtime, bodyValue.returnValue)
 					is ThrownValue		-> return bodyValue
 					is ContinueValue	-> {}
 					is BreakValue		-> return NullValue()

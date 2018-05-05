@@ -29,14 +29,14 @@ object ForSeq : Step {
 
 	private suspend fun forCommon(runtime: Runtime, cond: List<AstExpr>, next: List<AstExpr>, stmt: AstStatement): Value {
 		while (true) {
-			val condValue = Coercion.toBool(Value.prim(Step.execList(runtime, cond)))
+			val condValue = Coercion.toBool(Value.prim(runtime, Step.execList(runtime, cond)))
 			if (!condValue)
 				return NullValue()
 
 			val bodyValue = Step.exec(runtime, stmt)
 			if (bodyValue is FlowControlValue) {
 				when (bodyValue) {
-					is ReturnValue		-> return Value.root(bodyValue.returnValue)
+					is ReturnValue		-> return Value.root(runtime, bodyValue.returnValue)
 					is ThrownValue		-> return bodyValue
 					is ContinueValue	-> {}
 					is BreakValue		-> return NullValue()

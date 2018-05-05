@@ -75,23 +75,42 @@ for (i = 0; i <= 16; i++)
 
 namespace foo.bar.baz;
 
-using c.d.*;
+// using c.d.*;
 
-class test : a.b.woot {
+class test {
 	external foo_texture;
 	public a = 10, b = 5;
 	public static c = 6;
+
+	public init(d, e) {
+		sys.dbg.println("Constructor!", d, e);
+	}
+
+	public testMe() {
+		sys.dbg.println("testMe was called.");
+		self.furtherTest();
+	}
+
+	private furtherTest() {
+		sys.dbg.println("furtherTest was called on", self);
+	}
 
 	protected foo(a, b, c) {
 		return c;
 	}
 
-	private get woot() {
+	public get woot() {
+		return 10;
 	}
 	private static set fooz(val) {
+		sys.dbg.println("fooz was called with", val);
 	}
 }
-
+var testobj = new test("a", 5);
+testobj.testMe();
+sys.dbg.println("woot is", testobj.woot);
+test.fooz = "fooz test value";
+sys.dbg.println("test.c is", test.c);
 
 var testdict = {
 	"foo": 5, "bar": 10, 15: "fooz", doIt: function() { sys.dbg.println("Inside doIt!", self); }

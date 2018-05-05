@@ -89,7 +89,7 @@ data class AstFuncExpr(override val loc: AstLoc, val id: String?, val params: Li
 data class AstIndexExpr(override val loc: AstLoc, val left: AstExpr, val index: List<AstExpr>) : AstExpr
 data class AstDotExpr(override val loc: AstLoc, val left: AstExpr, val member: String) : AstExpr
 data class AstCallExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr
-data class AstNewExpr(override val loc: AstLoc, val left: AstExpr, val args: List<AstExpr>) : AstExpr
+data class AstNewExpr(override val loc: AstLoc, val fqcn: String, val args: List<AstExpr>) : AstExpr
 data class AstPostExpr(override val loc: AstLoc, override val op: String, override val expr: AstExpr) : AstUnary
 data class AstDeleteExpr(override val loc: AstLoc, val expr: AstExpr) : AstExpr
 data class AstVoidExpr(override val loc: AstLoc, val expr: AstExpr) : AstExpr
@@ -124,9 +124,10 @@ enum class AstAccessorType {
 }
 interface AstClassBodyDecl {
 	val scope: AstScopeType
+	val static: Boolean
 }
 
-data class AstMethodDecl(override val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val body: AstFuncDecl) : AstNode, AstClassBodyDecl
-data class AstFieldDecl(override val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val decls: List<AstVarDecl>) : AstNode, AstClassBodyDecl
-data class AstAccessorDecl(override  val loc: AstLoc, override val scope: AstScopeType, val static: Boolean, val type: AstAccessorType, val name: String, val arg: String?, val body: List<AstStatement>) : AstNode, AstClassBodyDecl
+data class AstMethodDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val body: AstFuncDecl) : AstNode, AstClassBodyDecl
+data class AstFieldDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val decls: List<AstVarDecl>) : AstNode, AstClassBodyDecl
+data class AstAccessorDecl(override  val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val type: AstAccessorType, val name: String, val arg: String?, val body: List<AstStatement>) : AstNode, AstClassBodyDecl
 

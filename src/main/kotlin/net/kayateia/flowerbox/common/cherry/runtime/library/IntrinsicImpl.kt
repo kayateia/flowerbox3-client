@@ -12,4 +12,4 @@ import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
-class IntrinsicImpl(val pkg: List<String>, val name: String, val impl: (runtime: Runtime, implicits: Scope, params: ListValue) -> Value)
+class IntrinsicImpl(val pkg: List<String>, val name: String, val impl: suspend (runtime: Runtime, implicits: Scope, params: ListValue) -> Value)

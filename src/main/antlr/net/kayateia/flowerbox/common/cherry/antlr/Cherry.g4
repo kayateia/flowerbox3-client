@@ -676,7 +676,7 @@ singleExpression
  | singleExpression '[' expressionSequence ']'                            # MemberIndexExpression
  | singleExpression '.' identifierName                                    # MemberDotExpression
  | singleExpression arguments                                             # ArgumentsExpression
- | New singleExpression arguments?                                        # NewExpression
+ | New fqcn arguments                                                     # NewExpression
  | singleExpression {!here(LineTerminator)}? '++'                         # PostIncrementExpression
  | singleExpression {!here(LineTerminator)}? '--'                         # PostDecreaseExpression
  | Delete singleExpression                                                # DeleteExpression

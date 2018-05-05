@@ -19,13 +19,13 @@ object UnaryExpr : Step {
 			if (value is FlowControlValue)
 				value
 			else
-				opExec(node.op, value)
+				opExec(runtime, node.op, value)
 		}
 		else -> throw Exception("invalid: wrong AST type was passed to step (${node.javaClass.canonicalName}")
 	}
 
-	private fun opExec(op: String, value: Any?): Value = when (op) {
-		"+" -> ConstValue(Coercion.toNum(value))
+	private suspend fun opExec(runtime: Runtime, op: String, value: Any?): Value = when (op) {
+		"+" -> ConstValue(Coercion.toNum(Value.prim(runtime, value)))
 		"-" -> if (value is Double)
 				ConstValue(-value)
 			else
@@ -34,7 +34,7 @@ object UnaryExpr : Step {
 				throw Exception("unary ~ not supported")
 			else
 				throw Exception("type error on unary ~")
-		"!" -> ConstValue(!Value.bool(value))
+		"!" -> ConstValue(!Value.bool(runtime, value))
 		else -> throw Exception("invalid unary operator ${op}")
 	}
 }

@@ -20,7 +20,7 @@ object SwitchStmt : Step {
 	}
 
 	private suspend fun execSwitch(runtime: Runtime, node: AstSwitchStmt): Value {
-		val exprValue = Value.root(Step.execList(runtime, node.exprs))
+		val exprValue = Value.root(runtime, Step.execList(runtime, node.exprs))
 		return if (exprValue is FlowControlValue)
 				exprValue
 			else
@@ -33,7 +33,7 @@ object SwitchStmt : Step {
 		val casesToExec = findCases(runtime, exprValue, cases)
 		for (case in casesToExec) {
 			// Execute the block.
-			val blockValue = Value.root(Step.execList(runtime, case.stmts))
+			val blockValue = Value.root(runtime, Step.execList(runtime, case.stmts))
 
 			// If we got a flow control statement, deal with it appropriately. Otherwise, keep on truckin'.
 			when (blockValue) {
@@ -53,8 +53,8 @@ object SwitchStmt : Step {
 			if (head.exprs == null)
 				return remaining
 
-			val swValue = Value.root(Step.execList(runtime, head.exprs))
-			if (Value.compare(exprValue, swValue))
+			val swValue = Value.root(runtime, Step.execList(runtime, head.exprs))
+			if (Value.compare(runtime, exprValue, swValue))
 				return remaining
 
 			remaining = remaining.drop(1)

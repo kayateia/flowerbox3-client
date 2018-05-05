@@ -22,7 +22,7 @@ object VarDecl : Step {
 			if (init is FlowControlValue)
 				init
 			else {
-				runtime.scope.set(node.id, Value.root(init))
+				runtime.scope.set(node.id, Value.root(runtime, init))
 
 				ScopeLValue(runtime.scope, node.id)
 			}

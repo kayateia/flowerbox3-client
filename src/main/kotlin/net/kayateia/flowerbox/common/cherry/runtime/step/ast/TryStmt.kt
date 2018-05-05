@@ -23,7 +23,7 @@ object TryStmt : Step {
 	}
 
 	private suspend fun execTry(runtime: Runtime, node: AstTryStmt): Value {
-		val blockValue = Value.root(Step.execList(runtime, node.block.stmts))
+		val blockValue = Value.root(runtime, Step.execList(runtime, node.block.stmts))
 
 		val returnValue = when (blockValue) {
 			is ThrownValue -> if (node.catch != null) execCatch(runtime, node.catch, blockValue) else blockValue
@@ -40,13 +40,13 @@ object TryStmt : Step {
 		runtime.scopePush().use {
 			if (node.id != null)
 				it.scope.set(node.id, thrownValue.thrownValue)
-			return Value.root(Step.execList(runtime, node.block.stmts))
+			return Value.root(runtime, Step.execList(runtime, node.block.stmts))
 		}
 	}
 
 	private suspend fun execFinally(runtime: Runtime, node: AstFinally): Value {
 		runtime.scopePush().use {
-			return Value.root(Step.execList(runtime, node.block.stmts))
+			return Value.root(runtime, Step.execList(runtime, node.block.stmts))
 		}
 	}
 }

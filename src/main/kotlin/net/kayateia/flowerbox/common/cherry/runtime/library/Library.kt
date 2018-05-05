@@ -9,6 +9,7 @@ package net.kayateia.flowerbox.common.cherry.runtime.library
 
 import net.kayateia.flowerbox.common.cherry.runtime.IntrinsicValue
 import net.kayateia.flowerbox.common.cherry.runtime.NamespaceValue
+import net.kayateia.flowerbox.common.cherry.runtime.Value
 
 class Library {
 	val rootPackages = NamespaceValue("")
@@ -18,24 +19,45 @@ class Library {
 		add(Debug.members)
 	}
 
-	fun add(members: List<IntrinsicImpl>) {
-		for (m in members) {
-			addOne(rootPackages, m.pkg, m)
-		}
+	// Looks for an item in the namespace hierarchy, returning null if it's not found.
+	// The items specified in "usings" will be tried as prefixes.
+	fun lookup(className: String, usings: List<String>): Value? {
+		// First check to see if we have a fully qualified name or not. If not, we'll try various
+		// "using'd" namespaces first.
+		if (!className.contains('.')) {
+			// Is it in the root namespace?
+			if (rootPackages.map.containsKey(className))
+				return rootPackages.map[className]
+
+			for (u in usings) {
+				val result = lookup("$u.$className")
+				if (result != null)
+					return result
+			}
+
+			return null
+		} else
+			return lookup(className)
 	}
 
-	fun addOne(ns: NamespaceValue, pkgList: List<String>, impl: IntrinsicImpl) {
-		if (pkgList.isEmpty()) {
-			ns.map[impl.name] = IntrinsicValue(impl.impl)
-		} else {
-			val cur = pkgList.first()
-			var curns: NamespaceValue? = ns.map[cur] as NamespaceValue?
-			if (curns == null) {
-				// TODO - Should actually check ns.has(cur) here in case there's a class already.
-				curns = NamespaceValue(cur)
-				ns.map[cur] = curns
+	// Looks for an item in the namespace hierarchy, returning null if it's not found.
+	fun lookup(fqcn: String): Value? {
+		val parts = fqcn.split(".")
+		var cur: Value? = rootPackages
+		for (i in parts) {
+			val next = when (cur) {
+				is NamespaceValue -> cur.map[i]
+				else -> return null
 			}
-			addOne(curns, pkgList.drop(1), impl)
+			cur = next
+		}
+
+		return cur
+	}
+
+	private fun add(members: List<IntrinsicImpl>) {
+		for (m in members) {
+			rootPackages.addOne(m.pkg, m.name, IntrinsicValue(m.impl, null))
 		}
 	}
 }

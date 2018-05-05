@@ -11,15 +11,15 @@ import net.kayateia.flowerbox.common.cherry.runtime.*
 
 object Math {
 	val members = listOf(
-		IntrinsicImpl(listOf("sys", "math"), "sin", { rt, i, p -> sin(rt, p) }),
-		IntrinsicImpl(listOf("sys", "math"), "cos", { rt, i, p -> cos(rt, p) })
+		IntrinsicImpl(listOf("sys", "math"), "sin", { r, i, p -> sin(r, p) }),
+		IntrinsicImpl(listOf("sys", "math"), "cos", { r, i, p -> cos(r, p) })
 	)
 
-	private fun sin(runtime: Runtime, params: ListValue): Value {
-		return ConstValue(java.lang.Math.sin(Coercion.toNum(Value.prim(params.listValue[0]))))
+	private suspend fun sin(runtime: Runtime, params: ListValue): Value {
+		return ConstValue(java.lang.Math.sin(Coercion.toNum(Value.prim(runtime, params.listValue[0]))))
 	}
 
-	private fun cos(runtime: Runtime, params: ListValue): Value {
-		return ConstValue(java.lang.Math.cos(Coercion.toNum(Value.prim(params.listValue[0]))))
+	private suspend fun cos(runtime: Runtime, params: ListValue): Value {
+		return ConstValue(java.lang.Math.cos(Coercion.toNum(Value.prim(runtime, params.listValue[0]))))
 	}
 }

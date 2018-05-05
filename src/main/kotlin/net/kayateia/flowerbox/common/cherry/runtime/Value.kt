@@ -7,7 +7,6 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime
 
-import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
 // Represents any special (non-primitive) value in the runtime.
@@ -15,15 +14,15 @@ interface Value {
 	companion object {
 		// Takes any value, primitive/native or otherwise, and tries to return the primitive
 		// value behind it. Throws if it's a non-readable non-primitive.
-		fun prim(value: Any?): Any? = when (value) {
-			is RValue -> prim(value.read())
+		suspend fun prim(runtime: Runtime, value: Any?): Any? = when (value) {
+			is RValue -> prim(runtime, value.read(runtime))
 			is Value -> throw Exception("can't read non-primitive Value $value")
 			else -> value
 		}
 
 		// Converts this Value into something resembling a boolean.
-		fun bool(value: Any?): Boolean = when (value) {
-			is RValue -> Coercion.toBool(prim(value))
+		suspend fun bool(runtime: Runtime, value: Any?): Boolean = when (value) {
+			is RValue -> Coercion.toBool(prim(runtime, value))
 			is NullValue -> false
 			is Value -> true
 			else -> Coercion.toBool(value)
@@ -31,15 +30,15 @@ interface Value {
 
 		// Really naive implementation of value comparison.
 		// TODO - non-Kotlin semantics and func/obj/etc identity comparisons
-		fun compare(valueA: Any?, valueB: Any?): Boolean = prim(valueA) == prim(valueB)
+		suspend fun compare(runtime: Runtime, valueA: Any?, valueB: Any?): Boolean = prim(runtime, valueA) == prim(runtime, valueB)
 
 		// Takes any Value and tries to return the simplest possible Value representing it.
-		fun root(value: Value): Value = when (value) {
+		suspend fun root(runtime: Runtime, value: Value): Value = when (value) {
 			is FlowControlValue -> value
 			is RValue -> {
-				val unboxed = value.read()
+				val unboxed = value.read(runtime)
 				if (unboxed is Value)
-					root(unboxed)
+					root(runtime, unboxed)
 				else
 					value
 			}
@@ -57,20 +56,20 @@ interface Value {
 
 // Represents a readable non-primitive value in the runtime.
 interface RValue : Value {
-	fun read(): Any?
+	suspend fun read(runtime: Runtime): Any?
 }
 
 // Represents a writable non-primitive value in the runtime.
 interface LValue : Value {
-	fun write(value: Any?)
+	suspend fun write(runtime: Runtime, value: Any?)
 }
 
 // A reference to an item in a scope which may be read or written.
 class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
-	override fun read(): Any? = scope.get(name)
-	override fun write(value: Any?) {
+	override suspend fun read(runtime: Runtime): Any? = scope.get(name)
+	override suspend fun write(runtime: Runtime, value: Any?) {
 		scope.set(name, when (value) {
-			is RValue -> value.read()
+			is RValue -> value.read(runtime)
 			is Value -> value
 			else -> ConstValue(value)
 		})
@@ -79,16 +78,8 @@ class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
 	override fun toString(): String = "ScopeValue(${name})"
 }
 
-class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : Value {
-	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})}))"
-}
-
-class IntrinsicValue(val delegate: (runtime: Runtime, implicits: Scope, args: ListValue) -> Value) : Value {
-	override fun toString(): String = "${delegate.javaClass.name}()"
-}
-
 class ConstValue(val constValue: Any?) : RValue {
-	override fun read(): Any? = constValue
+	override suspend fun read(runtime: Runtime): Any? = constValue
 	override fun toString(): String = "ConstValue(${constValue})"
 }
 
@@ -97,8 +88,8 @@ class NullValue : Value {
 }
 
 class ListSetter(val array: ListValue, val key: Int) : RValue, LValue {
-	override fun read(): Any? = array.listValue[key]
-	override fun write(value: Any?) {
+	override suspend fun read(runtime: Runtime): Any? = array.listValue[key]
+	override suspend fun write(runtime: Runtime, value: Any?) {
 		if (value is Value)
 			array.listValue[key] = value
 		else
@@ -106,18 +97,18 @@ class ListSetter(val array: ListValue, val key: Int) : RValue, LValue {
 	}
 }
 
-class ListValue(val listValue: MutableList<Value>) : Value {
+class ListValue(val listValue: MutableList<Value> = mutableListOf()) : Value {
 	override fun toString(): String = "List(${listValue.fold("", {a,b -> "$a,$b"})})"
 }
 
-class DictSetter(val obj: DictValue, val key: Any) : RValue, LValue {
-	override fun read(): Any? = obj.map[key]
+class DictSetter(val dict: DictValue, val key: Any) : RValue, LValue {
+	override suspend fun read(runtime: Runtime): Any? = dict.map[key]
 
-	override fun write(value: Any?) {
+	override suspend fun write(runtime: Runtime, value: Any?) {
 		if (value is Value)
-			obj.write(key, value)
+			dict.write(key, value)
 		else
-			obj.write(key, ConstValue(value))
+			dict.write(key, ConstValue(value))
 	}
 }
 
@@ -133,23 +124,6 @@ class DictValue(val map: HashMap<Any, Value>, val readOnly: Boolean) : Value {
 	override fun toString(): String = "DictValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
 }
 
-// A static object is basically a special variant of a read-only, string-keyed dictionary with
-// an associated name and namespace. Only the compiler can create a static, so it should be
-// distinct from just objects. Name should not include the static, and namespace should be
-// formatted.with.dots.
-open class ObjectValue(val name: String) : Value {
-	val map = HashMap<String, Value>()
-
-	fun write(key: String, value: Value) = map.put(key, value)
-	fun read(key: String): Value? = map[key]	// TODO: getters and setters in classes
-	fun has(key: String) = map.containsKey(key)
-
-	override fun toString(): String = "ObjectValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
-}
-
-class NamespaceValue(val namespace: String) : ObjectValue(namespace)
-class ClassValue(val namespace: String, val className: String, val base: ClassValue) : ObjectValue(namespace)
-
 interface FlowControlValue : Value
 
 class ReturnValue(val returnValue: Value) : FlowControlValue
@@ -159,5 +133,5 @@ class BreakValue : FlowControlValue
 class ContinueValue : FlowControlValue
 
 class ThrownValue(val thrownValue: Any?) : FlowControlValue, RValue {
-	override fun read(): Any? = thrownValue
+	override suspend fun read(runtime: Runtime): Any? = thrownValue
 }
