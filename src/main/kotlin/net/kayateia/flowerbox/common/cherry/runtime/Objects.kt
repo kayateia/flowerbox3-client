@@ -8,6 +8,8 @@
 package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.*
+import net.kayateia.flowerbox.common.cherry.runtime.scope.ConstScope
+import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 import net.kayateia.flowerbox.common.cherry.runtime.step.ast.CallExpr
@@ -44,7 +46,7 @@ data class FieldValue(val node: AstFieldDecl, val scope: AstScopeType, val stati
 data class MethodValue(val func: AstFuncExpr, val node: AstMethodDecl)
 data class AccessorValue(val func: AstFuncExpr, val node: AstAccessorDecl)
 
-class ClassValue(val ast: AstClassDecl, val capturedScope: Scope) : Value {
+class ClassValue(val ast: AstClassDecl, val capturedScope: Scope, val capturedUsings: List<String>) : Value {
 	private val fields = HashMap<String, FieldValue>()
 	private val methods = HashMap<String, MethodValue>()
 	private val getters = HashMap<String, AccessorValue>()
@@ -89,11 +91,8 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope) : Value {
 		val obj = ObjectValue(this)
 
 		// First, do any implicit constructor work from initializers in base classes.
-		if (ast.base != null) {
-			val baseClass = runtime.library.lookup(ast.base, runtime.nsUsings)
-			if (baseClass == null || baseClass !is ClassValue)
-				throw Exception("can't locate base class of ${ast.name} (${ast.base})")
-
+		val baseClass = getBaseClass(runtime)
+		if (baseClass != null) {
 			val baseConstruct = baseClass.implicitConstruct(runtime, obj)
 			if (baseConstruct is ThrownValue)
 				return baseConstruct
@@ -107,10 +106,19 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope) : Value {
 		// Finally, look for any actual constructor method and call it if needed.
 		val initMethod = methods["init"]
 		if (initMethod != null) {
-			val initValue = FuncValue(initMethod.func, obj, capturedScope).call(runtime, args)
+			val funcScope = getMethodScope(obj, baseClass)
+			val initValue = FuncValue(initMethod.func, funcScope).call(runtime, args)
 			if (initValue is ThrownValue)
 				return initValue
+		} else if (baseClass != null) {
+			// If this object had no constructor, the base has no chance to run. So we need
+			// to provide an implicit default constructor that calls the base.
+			val baseInitMethod = baseClass.getMethod(runtime, ObjectValue(baseClass, obj.map), "init")
+			if (baseInitMethod != null && baseInitMethod is FuncValue)
+				baseInitMethod.call(runtime, ListValue())
 		}
+
+		// TODO - Force any constructor to include a call to the base constructor?
 
 		// No explicit constructor - just return the object.
 		return obj
@@ -134,38 +142,147 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope) : Value {
 		return NullValue()
 	}
 
-	suspend fun get(runtime: Runtime, obj: ObjectValue?, name: String): Value {
-		val scv = staticConstruct(runtime)
-		if (scv is ThrownValue)
-			return scv
+	private fun getBaseClass(runtime: Runtime): ClassValue? {
+		if (ast.base != null) {
+			val baseClass = runtime.library.lookup(ast.base, capturedUsings)
+			if (baseClass == null || baseClass !is ClassValue) {
+				throw Exception("can't subclass from non-class or empty value $baseClass (${ast.name}:${ast.base})")
+			}
+			return baseClass
+		}
+		return null
+	}
+
+	private fun getMethodScope(obj: ObjectValue?, baseClass: ClassValue?): Scope {
+		val funcScope = ConstScope(capturedScope)
+		funcScope.setConstant("self", obj ?: NullValue())
+
+		// This is the same object contents, it just redirects to the base class for class ops.
+		if (obj != null && baseClass != null) {
+			val baseObj = ObjectValue(baseClass, obj.map)
+			funcScope.setConstant("base", baseObj)
+		} else
+			funcScope.setConstant("base", NullValue())
+
+		return funcScope
+	}
+
+	private fun getMethod(runtime: Runtime, obj: ObjectValue?, name: String): Value? {
+		val baseClass = getBaseClass(runtime)
 
 		// Do we have a method with that name?
 		val method = methods[name]
 		if (method != null) {
 			if ((obj == null) != method.node.static)
 				throw Exception("can't call static method on non-static, and vice-versa")
-			return FuncValue(method.func, obj, capturedScope)
+
+			val funcScope = getMethodScope(obj, baseClass)
+			return FuncValue(method.func, funcScope)
 		}
 
-		val map = obj?.map ?: companion
+		// Try base classes.
+		if (baseClass != null)
+			return baseClass.getMethod(runtime, obj, name)
+		else
+			return null
+	}
 
+	private fun getField(runtime: Runtime, obj: ObjectValue?, objMap: HashMap<String, Value>, name: String): Value? {
 		// Do we have a field with that name?
 		val field = fields[name]
 		if (field != null) {
 			if ((obj == null) != field.static)
 				throw Exception("can't get static field on non-static, and vice-versa")
-			return map[name] ?: NullValue()
+			return objMap[name] ?: NullValue()
 		}
+
+		// Try base classes.
+		val baseClass = getBaseClass(runtime)
+		if (baseClass != null)
+			return baseClass.getField(runtime, obj, objMap, name)
+		else
+			return null
+	}
+
+	private suspend fun getByGetter(runtime: Runtime, obj: ObjectValue?, objMap: HashMap<String, Value>, name: String): Value? {
+		val baseClass = getBaseClass(runtime)
 
 		// Look for a getter.
 		val getter = getters[name]
 		if (getter != null) {
 			if ((obj == null) != getter.node.static)
 				throw Exception("can't call static getter on non-static, and vice-versa")
-			return Value.root(runtime, FuncValue(getter.func, obj, capturedScope).call(runtime, ListValue()))
+
+			val funcScope = getMethodScope(obj, baseClass)
+			return Value.root(runtime, FuncValue(getter.func, funcScope).call(runtime, ListValue()))
 		}
 
+		// Try base classes.
+		if (baseClass != null)
+			return baseClass.getByGetter(runtime, obj, objMap, name)
+		else
+			return null
+	}
+
+	suspend fun get(runtime: Runtime, obj: ObjectValue?, name: String): Value {
+		val scv = staticConstruct(runtime)
+		if (scv is ThrownValue)
+			return scv
+
+		val methodValue = getMethod(runtime, obj, name)
+		if (methodValue != null)
+			return methodValue
+
+		val map = obj?.map ?: companion
+
+		val fieldValue = getField(runtime, obj, map, name)
+		if (fieldValue != null)
+			return fieldValue
+
+		// Look for a getter.
+		val getterValue = getByGetter(runtime, obj, map, name)
+		if (getterValue != null)
+			return getterValue
+
 		throw Exception("invalid member read access for $name")
+	}
+
+	private fun setField(runtime: Runtime, obj: ObjectValue?, objMap: HashMap<String, Value>, name: String, value: Value): Value? {
+		// Do we have a field with that name?
+		val field = fields[name]
+		if (field != null) {
+			if ((obj == null) != field.static)
+				throw Exception("can't set static field on non-static, and vice-versa")
+			objMap[name] = value
+			return NullValue()
+		}
+
+		// Try base classes.
+		val baseClass = getBaseClass(runtime)
+		if (baseClass != null)
+			return baseClass.getField(runtime, obj, objMap, name)
+		else
+			return null
+	}
+
+	private suspend fun setBySetter(runtime: Runtime, obj: ObjectValue?, objMap: HashMap<String, Value>, name: String, value: Value): Value? {
+		val baseClass = getBaseClass(runtime)
+
+		// Look for a setter.
+		val setter = setters[name]
+		if (setter != null) {
+			if ((obj == null) != setter.node.static)
+				throw Exception("can't call static getter on non-static, and vice-versa")
+
+			val funcScope = getMethodScope(obj, baseClass)
+			return Value.root(runtime, FuncValue(setter.func, funcScope).call(runtime, ListValue(mutableListOf(value))))
+		}
+
+		// Try base classes.
+		if (baseClass != null)
+			return baseClass.setBySetter(runtime, obj, objMap, name, value)
+		else
+			return null
 	}
 
 	suspend fun put(runtime: Runtime, obj: ObjectValue?, name: String, value: Value): Value {
@@ -176,27 +293,20 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope) : Value {
 		val map = obj?.map ?: companion
 
 		// Can't put methods.
-		val method = methods[name]
-		if (method != null)
+		val methodValue = getMethod(runtime, obj, name)
+		if (methodValue != null)
 			throw Exception("can't set over a method")
 
 		// Do we have a field with that name?
-		val field = fields[name]
-		if (field != null) {
-			if ((obj == null) != field.static)
-				throw Exception("can't set static field on non-static, and vice-versa")
-			map[name] = value
-			return NullValue()
-		} else {
-			// Look for a setter.
-			val setter = setters[name]
-			if (setter != null) {
-				if ((obj == null) != setter.node.static)
-					throw Exception("can't call static setter on non-static, and vice-versa")
-				return Value.root(runtime, FuncValue(setter.func, obj, capturedScope).call(runtime, ListValue(mutableListOf(value))))
-			} else
-				throw Exception("invalid member write access for $name")
-		}
+		val fieldValue = setField(runtime, obj, map, name, value)
+		if (fieldValue != null)
+			return fieldValue
+
+		val setterValue = setBySetter(runtime, obj, map, name, value)
+		if (setterValue != null)
+			return setterValue
+
+		throw Exception("invalid member write access for $name")
 	}
 }
 
@@ -207,8 +317,6 @@ class ObjectAccessor(val obj: ObjectValue, val name: String) : LValue, RValue {
 	}
 }
 
-class ObjectValue(val `class`: ClassValue) : Value {
-	val map = HashMap<String, Value>()
-
+class ObjectValue(val `class`: ClassValue, val map: HashMap<String, Value> = HashMap()) : Value {
 	override fun toString(): String = "Object(${`class`.ast.name}: ${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
 }

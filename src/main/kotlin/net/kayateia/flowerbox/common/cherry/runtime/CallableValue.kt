@@ -8,6 +8,7 @@
 package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
+import net.kayateia.flowerbox.common.cherry.runtime.scope.ConstScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
@@ -17,7 +18,7 @@ interface CValue : Value {
 	suspend fun call(runtime: Runtime, args: ListValue): Value
 }
 
-class FuncValue(val funcNode: AstFuncExpr, val capturedSelf: Value?, val capturedScope: Scope) : CValue {
+class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : CValue {
 	override suspend fun call(runtime: Runtime, args: ListValue): Value {
 		val paramScope = MapScope(capturedScope)
 		paramScope.setLocal("arguments", args)
@@ -30,8 +31,6 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedSelf: Value?, val capture
 				paramScope.setLocal(it, NullValue())
 		}
 
-		paramScope.setLocal("self", capturedSelf)
-
 		runtime.scopePush(paramScope).use {
 			val rv = Step.exec(runtime, funcNode.body)
 			return when (rv) {
@@ -43,7 +42,11 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedSelf: Value?, val capture
 	}
 	override fun toString(): String = "FuncValue(${funcNode.id}(${funcNode.params?.fold("", {a,b -> "$a,$b"})}))"
 
-	fun newSelf(self: Value?) = FuncValue(funcNode, self, capturedScope)
+	fun newSelf(self: Value): FuncValue {
+		val funcScope = ConstScope(capturedScope)
+		funcScope.setConstant("self", self)
+		return FuncValue(funcNode, funcScope)
+	}
 }
 
 class IntrinsicValue(val delegate: suspend (runtime: Runtime, implicits: Scope, args: ListValue) -> Value, val self: Value?) : CValue {

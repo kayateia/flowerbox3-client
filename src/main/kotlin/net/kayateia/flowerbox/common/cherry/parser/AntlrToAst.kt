@@ -124,6 +124,7 @@ fun SingleExpressionContext.toAst(p: Parser): AstExpr = when(this) {
 	is AssignmentExpressionContext			-> AstBinaryExpr(AstLoc.from(p, this), singleExpression(0).toAst(p), getChild(1).text, singleExpression(1).toAst(p))
 	is AssignmentOperatorExpressionContext	-> AstBinaryExpr(AstLoc.from(p, this), singleExpression(0).toAst(p), assignmentOperator().text, singleExpression(1).toAst(p))
 	is SelfExpressionContext				-> AstSelfExpr(AstLoc.from(p, this))
+	is BaseExpressionContext				-> AstBaseExpr(AstLoc.from(p, this))
 	is IdentifierExpressionContext			-> AstIdExpr(AstLoc.from(p, this), Identifier().text)
 	is LiteralExpressionContext				-> AstLiteralExpr(AstLoc.from(p, this), literal().toAst(p))
 	is ArrayLiteralExpressionContext		-> AstListExpr(AstLoc.from(p, this), arrayLiteral().toAst(p))

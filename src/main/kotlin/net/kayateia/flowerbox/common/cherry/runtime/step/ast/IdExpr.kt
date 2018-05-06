@@ -10,6 +10,7 @@ package net.kayateia.flowerbox.common.cherry.runtime.step.ast
 import net.kayateia.flowerbox.common.cherry.parser.AstIdExpr
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstSelfExpr
+import net.kayateia.flowerbox.common.cherry.parser.AstBaseExpr
 import net.kayateia.flowerbox.common.cherry.runtime.NullValue
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.ScopeLValue
@@ -24,6 +25,12 @@ object IdExpr : Step {
 			else
 				runtime.library.lookup(node.id, listOf(runtime.currentNamespace) + runtime.nsUsings)
 					?: throw Exception("undeclared variable ${node.id}")
+		}
+		is AstBaseExpr -> {
+			if (runtime.scope.has("base"))
+				Value.box(runtime.scope.get("base"))
+			else
+				NullValue()
 		}
 		is AstSelfExpr -> {
 			if (runtime.scope.has("self"))

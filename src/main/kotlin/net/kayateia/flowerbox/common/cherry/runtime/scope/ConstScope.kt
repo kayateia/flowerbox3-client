@@ -11,10 +11,11 @@ import net.kayateia.flowerbox.common.cherry.runtime.library.Library
 
 open class ConstScope(override val parent: Scope? = null) : MapScope(parent) {
 	override fun set(name: String, value: Any?) {
-		/* should throw an error here */
+		if (hasLocal(name))
+			throw Exception("can't write to const value ${name}")
 	}
 	override fun setLocal(name: String, value: Any?) {
-		/* should throw an error here */
+		throw Exception("can't add value to a const scope (${name})")
 	}
 
 	fun setConstant(name: String, value: Any?) = super.setLocal(name, value)

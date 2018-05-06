@@ -100,6 +100,7 @@ data class AstBinaryExpr(override val loc: AstLoc, override val left: AstExpr, o
 data class AstLazyBinaryExpr(override val loc: AstLoc, override val left: AstExpr, override val op: String, override val right: AstExpr) : AstBinary
 data class AstTernaryExpr(override val loc: AstLoc, val cond: AstExpr, val ifTrue: AstExpr, val ifFalse: AstExpr) : AstExpr
 data class AstSelfExpr(override val loc: AstLoc) : AstExpr
+data class AstBaseExpr(override val loc: AstLoc) : AstExpr
 data class AstIdExpr(override val loc: AstLoc, val id: String) : AstExpr
 data class AstLiteralExpr(override val loc: AstLoc, val value: Any?) : AstExpr
 data class AstListExpr(override val loc: AstLoc, val contents: List<AstExpr>) : AstExpr

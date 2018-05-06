@@ -17,7 +17,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object FuncExpr : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstFuncExpr -> {
-			val func = FuncValue(node, null, runtime.scope)
+			val func = FuncValue(node, runtime.scope)
 			if (node.id != null)
 				runtime.scope.set(node.id, func)
 

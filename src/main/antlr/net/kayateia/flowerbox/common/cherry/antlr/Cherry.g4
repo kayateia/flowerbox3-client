@@ -704,6 +704,7 @@ singleExpression
  | singleExpression '=' singleExpression                                  # AssignmentExpression
  | singleExpression assignmentOperator singleExpression                   # AssignmentOperatorExpression
  | Self                                                                   # SelfExpression
+ | Base                                                                   # BaseExpression
  | Identifier                                                             # IdentifierExpression
  | literal                                                                # LiteralExpression
  | arrayLiteral                                                           # ArrayLiteralExpression
@@ -775,6 +776,7 @@ keyword
  | Debugger
  | Function
  | Self
+ | Base
  | With
  | Default
  | If
@@ -927,7 +929,6 @@ Switch     : 'switch';
 While      : 'while';
 Debugger   : 'debugger';
 Function   : 'function';
-Self       : 'self';
 With       : 'with';
 Default    : 'default';
 If         : 'if';
@@ -938,6 +939,7 @@ Try        : 'try';
 
 // Cherry keywords
 Class      : 'class';
+Self       : 'self';
 Base       : 'base';
 Const      : 'const';
 Namespace  : 'namespace';

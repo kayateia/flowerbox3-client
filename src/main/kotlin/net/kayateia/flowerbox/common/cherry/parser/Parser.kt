@@ -77,13 +77,40 @@ namespace foo.bar.baz;
 
 // using c.d.*;
 
-class test {
+class testbase {
+	public baseA = 15;
+	public static baseC = 12;
+
+	public init(a) {
+		sys.dbg.println("testbase constructor!", a, self);
+	}
+
+	public randomMethod() {
+		sys.dbg.println("randomMethod called");
+		return "fooz";
+	}
+
+	public static randomStatic() {
+		sys.dbg.println("randomstatic called");
+	}
+
+	public get woot() {
+		return "basewoot";
+	}
+
+	public static set basefooz(val) {
+		sys.dbg.println("basefooz was called", val);
+	}
+}
+
+class test : testbase {
 	external foo_texture;
 	public a = 10, b = 5;
 	public static c = 6;
 
 	public init(d, e) {
-		sys.dbg.println("Constructor!", d, e);
+		base.init(20);
+		sys.dbg.println("Constructor!", d, e, self);
 	}
 
 	public testMe() {
@@ -111,6 +138,10 @@ testobj.testMe();
 sys.dbg.println("woot is", testobj.woot);
 test.fooz = "fooz test value";
 sys.dbg.println("test.c is", test.c);
+
+testobj.randomMethod();
+test.randomStatic();
+test.basefooz = "set base fooz";
 
 var testdict = {
 	"foo": 5, "bar": 10, 15: "fooz", doIt: function() { sys.dbg.println("Inside doIt!", self); }

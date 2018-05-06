@@ -7,6 +7,7 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime
 
+import net.kayateia.flowerbox.common.cherry.runtime.scope.ConstScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
 // Represents any special (non-primitive) value in the runtime.
@@ -102,25 +103,26 @@ class ListValue(val listValue: MutableList<Value> = mutableListOf()) : Value {
 }
 
 class DictSetter(val dict: DictValue, val key: Any) : RValue, LValue {
-	override suspend fun read(runtime: Runtime): Any? = dict.map[key]
+	override suspend fun read(runtime: Runtime): Any? {
+		val readValue = dict.map[key]
+		return if (readValue is FuncValue) {
+				val funcScope = ConstScope(readValue.capturedScope)
+				funcScope.setConstant("self", dict)
+				return FuncValue(readValue.funcNode, funcScope)
+			} else
+				readValue
+	}
 
 	override suspend fun write(runtime: Runtime, value: Any?) {
-		if (value is Value)
-			dict.write(key, value)
-		else
-			dict.write(key, ConstValue(value))
+		dict.map[key] =
+			if (value is Value)
+				value
+			else
+				ConstValue(value)
 	}
 }
 
 class DictValue(val map: HashMap<Any, Value>, val readOnly: Boolean) : Value {
-	fun write(key: Any, value: Value) = map.put(key, value)
-	fun read(key: Any): Value? =
-		if (readOnly)
-			map[key]
-		else
-			DictSetter(this, key)
-	fun has(key: String) = map.containsKey(key)
-
 	override fun toString(): String = "DictValue(${map.entries.fold("", {a, b -> "$a,${b.key}:${b.value}"})})"
 }
 

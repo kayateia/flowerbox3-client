@@ -60,6 +60,7 @@ interface Step {
 			is AstLazyBinaryExpr		-> LazyBinaryExpr
 			is AstTernaryExpr			-> TODO()
 			is AstSelfExpr				-> IdExpr
+			is AstBaseExpr				-> IdExpr
 			is AstIdExpr				-> IdExpr
 			is AstLiteralExpr			-> LiteralExpr
 			is AstExprListExpr			-> ExprListExpr
