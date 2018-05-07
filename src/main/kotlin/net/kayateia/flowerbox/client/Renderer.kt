@@ -8,13 +8,14 @@
 package net.kayateia.flowerbox.client
 
 import net.kayateia.flowerbox.common.cherry.parser.Parser
-import net.kayateia.flowerbox.common.cherry.runtime.DictValue
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.runtime.*
+import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.util.vector.*
 import java.util.*
+import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 
 typealias CherryRuntime = net.kayateia.flowerbox.common.cherry.runtime.Runtime
@@ -32,30 +33,64 @@ object Renderer {
 	// Queue of chunks that remain to be turned into VAO/VBOs.
 	private val chunkRenderQueue: Queue<Chunk> = ArrayDeque<Chunk>()
 
-	private val lightingProgramData = DictValue(HashMap(), false)
 	private val lightingProgram = """
-		data.i = (data.i + 1) % 360;
+		namespace fb.test;
 
-		var rads = data.i * 3.1415 / 180.0;
-		data.x = 50.0 * sys.math.cos(rads);
-		data.y = 50.0 * sys.math.sin(rads);
+		class LightSource {
+			private i = 0;
+
+			public native set x(val) {}
+			public native set y(val) {}
+			public native set z(val) {}
+
+			public init() {
+				self.x = 50.0;
+				self.y = 30.0;
+				self.z = 0.0;
+			}
+
+			public perFrame() {
+				self.i = (self.i + 1) % 360;
+				self.updatePos();
+			}
+
+			private updatePos() {
+				var rads = self.i * 3.1415 / 180.0;
+
+				self.x = 50.0 * sys.math.cos(rads);
+				self.y = 30.0 + 10.0 * sys.math.sin(rads);
+				self.z = 50.0 * sys.math.sin(rads);
+			}
+		}
+
+		var light = new LightSource();
 	"""
-	private var lightingProgramRuntime: CherryRuntime? = null
+	private val perFrameProgram = "light.perFrame();"
+
+	private val parsedProgram = Parser().parse("<inline>", lightingProgram)
+	private val parsedPerFrame = Parser().parse("<inline>", perFrameProgram)
+	private var cherry: CherryRuntime = CherryRuntime()
+	private val lightPos: HashMap<String, Double> = HashMap()
 
 	init {
-		lightingProgramData.map.put("i", Value.box(0.0))
+		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "x", { rt, m, _, _, a -> programSetter(rt, m, a) }))
+		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "y", { rt, m, _, _, a -> programSetter(rt, m, a) }))
+		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "z", { rt, m, _, _, a -> programSetter(rt, m, a) }))
+		cherry.execute(parsedProgram)
+	}
 
-		val ast = Parser().parse("<inline>", lightingProgram)
-		lightingProgramRuntime = CherryRuntime()
-		lightingProgramRuntime!!.scope.set("data", lightingProgramData)
+	private suspend fun programSetter(rt: CherryRuntime, mem: String, args: ListValue): Value {
+		lightPos[mem] = Coercion.toNum(Value.prim(rt, args.listValue[0]))
+		return NullValue()
 	}
 
 	private fun lightingProgramPerFrame() {
-		/*lightingProgramRuntime!!.execute(10000)
+		cherry.execute(parsedPerFrame)
+		// println(lightPos)
 		glUniform3f(lightPositionLocation,
-			(Value.prim(lightingProgramData.read("x")) as Double).toFloat(),
-			30f,
-			(Value.prim(lightingProgramData.read("y")) as Double).toFloat()) */
+			lightPos["x"]!!.toFloat(),
+			lightPos["y"]!!.toFloat(),
+			lightPos["z"]!!.toFloat())
 	}
 
 	// Called once, in the render loop.
