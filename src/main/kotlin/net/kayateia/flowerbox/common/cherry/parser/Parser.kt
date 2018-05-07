@@ -73,7 +73,7 @@ document.clear();
 for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
-			val ast = Parser().parse("<inline>", Debug.decls  + "\n" + Math.decls + """
+			val ast = Parser().parse("<inline>", """
 
 namespace foo.bar.baz;
 
@@ -238,8 +238,8 @@ var h = g++;
 var i = ++g;
 
 			""")
-			val runtime = Runtime(ast)
-			val rv = runtime.execute(10000)
+			val runtime = Runtime()
+			val rv = runtime.execute(ast, 10000)
 			println("$runtime")
 			// println("${runtime.completed} ${runtime.result} ${rv}")
 		}

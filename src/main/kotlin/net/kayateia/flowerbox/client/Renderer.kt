@@ -46,7 +46,7 @@ object Renderer {
 		lightingProgramData.map.put("i", Value.box(0.0))
 
 		val ast = Parser().parse("<inline>", lightingProgram)
-		lightingProgramRuntime = CherryRuntime(ast)
+		lightingProgramRuntime = CherryRuntime()
 		lightingProgramRuntime!!.scope.set("data", lightingProgramData)
 	}
 

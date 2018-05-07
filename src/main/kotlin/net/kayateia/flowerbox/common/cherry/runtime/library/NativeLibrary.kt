@@ -7,10 +7,16 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.library
 
+import net.kayateia.flowerbox.common.cherry.parser.AstProgram
 import net.kayateia.flowerbox.common.cherry.runtime.ListValue
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
+
+interface NativeObjectImpl {
+	val members: List<NativeImpl>
+	val declProgram: AstProgram
+}
 
 class NativeImpl(val namespace: String, val className: String, val memberName: String,
 	val impl: suspend (runtime: Runtime, member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue) -> Value)
@@ -20,9 +26,11 @@ class NativeClassMembers(val map: HashMap<String, NativeImpl> = HashMap())
 class NativeNamespace(val map: HashMap<String,NativeClassMembers> = HashMap())
 
 class NativeLibrary(val namespaces: HashMap<String, NativeNamespace> = HashMap()) {
+	val allNativeImpls: List<NativeObjectImpl> = listOf(Debug, Math)
+
 	init {
-		registerAll(Debug.members)
-		registerAll(Math.members)
+		for (i in allNativeImpls)
+			registerAll(i.members)
 	}
 
 	fun register(native: NativeImpl) {
@@ -50,5 +58,10 @@ class NativeLibrary(val namespaces: HashMap<String, NativeNamespace> = HashMap()
 	fun registerAll(nativeList: List<NativeImpl>) {
 		for (i in nativeList)
 			register(i)
+	}
+
+	fun executeAllDecls(runtime: Runtime) {
+		for (i in allNativeImpls)
+			runtime.execute(i.declProgram)
 	}
 }

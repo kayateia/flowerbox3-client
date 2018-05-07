@@ -9,6 +9,8 @@ package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstProgram
+import net.kayateia.flowerbox.common.cherry.parser.Parser
+import net.kayateia.flowerbox.common.cherry.runtime.library.Debug
 import net.kayateia.flowerbox.common.cherry.runtime.library.Library
 import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
 import net.kayateia.flowerbox.common.cherry.runtime.library.NativeLibrary
@@ -18,7 +20,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
-class Runtime(val program: AstProgram) {
+class Runtime() {
 	val scopeStack = ScopeStack()
 	val lexicalStack = LexicalStack()
 	var totalSteps = 0
@@ -44,6 +46,8 @@ class Runtime(val program: AstProgram) {
 		nativeLibrary.register(
 			NativeImpl("foo.bar.baz", "testbase", "testNativeGet", { _, member, self, capturedScope, params -> testNative(member, self, capturedScope, params) })
 		)
+
+		nativeLibrary.executeAllDecls(this)
 	}
 
 	fun testNative(member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue): Value {
@@ -65,7 +69,7 @@ class Runtime(val program: AstProgram) {
 	}
 
 	// Returns true if we've fully completed execution.
-	fun execute(maxSteps: Int = -1): Boolean {
+	fun execute(program: AstProgram, maxSteps: Int = -1): Boolean {
 		this.maxSteps = maxSteps
 		totalSteps = 0
 
