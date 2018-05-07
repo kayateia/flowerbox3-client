@@ -7,17 +7,11 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime.library
 
-import net.kayateia.flowerbox.common.cherry.runtime.IntrinsicValue
 import net.kayateia.flowerbox.common.cherry.runtime.NamespaceValue
 import net.kayateia.flowerbox.common.cherry.runtime.Value
 
 class Library {
 	val rootPackages = NamespaceValue("")
-
-	init {
-		add(Math.members)
-		add(Debug.members)
-	}
 
 	// Looks for an item in the namespace hierarchy, returning null if it's not found.
 	// The items specified in "usings" will be tried as prefixes.
@@ -53,11 +47,5 @@ class Library {
 		}
 
 		return cur
-	}
-
-	private fun add(members: List<IntrinsicImpl>) {
-		for (m in members) {
-			rootPackages.addOne(m.pkg, m.name, IntrinsicValue(m.impl, null))
-		}
 	}
 }

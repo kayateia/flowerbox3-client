@@ -8,6 +8,7 @@
 package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.AstFuncExpr
+import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
 import net.kayateia.flowerbox.common.cherry.runtime.scope.ConstScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
@@ -49,12 +50,16 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : CValue {
 	}
 }
 
-class IntrinsicValue(val delegate: suspend (runtime: Runtime, implicits: Scope, args: ListValue) -> Value, val self: Value?) : CValue {
+class NativeValue(val native: NativeImpl, val capturedScope: Scope) : CValue {
 	override suspend fun call(runtime: Runtime, args: ListValue): Value {
-		val implicits = MapScope()
-		implicits.setLocal("self", self ?: NullValue())
-		return delegate(runtime, implicits, args)
+		val self = capturedScope.get("self")
+		val selfMap = if (self is ObjectValue)
+				self.map
+			else
+				null
+
+		return native.impl(runtime, native.memberName, selfMap, capturedScope, args)
 	}
-	override fun toString(): String = "${delegate.javaClass.name}()"
+	override fun toString(): String = "Native(${native.namespace}.${native.className}.${native.memberName})"
 }
 

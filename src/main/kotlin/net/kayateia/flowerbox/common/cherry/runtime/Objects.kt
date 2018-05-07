@@ -9,10 +9,8 @@ package net.kayateia.flowerbox.common.cherry.runtime
 
 import net.kayateia.flowerbox.common.cherry.parser.*
 import net.kayateia.flowerbox.common.cherry.runtime.scope.ConstScope
-import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
-import net.kayateia.flowerbox.common.cherry.runtime.step.ast.CallExpr
 
 class NamespaceValue(val namespace: String) : Value {
 	val map = HashMap<String, Value>()
@@ -46,7 +44,7 @@ data class FieldValue(val node: AstFieldDecl, val scope: AstScopeType, val stati
 data class MethodValue(val func: AstFuncExpr, val node: AstMethodDecl)
 data class AccessorValue(val func: AstFuncExpr, val node: AstAccessorDecl)
 
-class ClassValue(val ast: AstClassDecl, val capturedScope: Scope, val capturedUsings: List<String>) : Value {
+class ClassValue(val ast: AstClassDecl, val namespace: String, val capturedScope: Scope, val capturedUsings: List<String>) : Value {
 	private val fields = HashMap<String, FieldValue>()
 	private val methods = HashMap<String, MethodValue>()
 	private val getters = HashMap<String, AccessorValue>()
@@ -177,6 +175,16 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope, val capturedUs
 				throw Exception("can't call static method on non-static, and vice-versa")
 
 			val funcScope = getMethodScope(obj, baseClass)
+
+			// Is it a native method?
+			if (method.node.native) {
+				// See if we have it.
+				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get(name)
+					?: throw Exception("no implementation for native method $namespace.${ast.name}.$name")
+
+				return NativeValue(nativeImpl, funcScope)
+			}
+
 			return FuncValue(method.func, funcScope)
 		}
 
@@ -214,6 +222,16 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope, val capturedUs
 				throw Exception("can't call static getter on non-static, and vice-versa")
 
 			val funcScope = getMethodScope(obj, baseClass)
+
+			// Is it a native method?
+			if (getter.node.native) {
+				// See if we have it.
+				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get(name)
+						?: throw Exception("no implementation for native getter $namespace.${ast.name}.$name")
+
+				return nativeImpl.impl(runtime, name, objMap, funcScope, ListValue())
+			}
+
 			return Value.root(runtime, FuncValue(getter.func, funcScope).call(runtime, ListValue()))
 		}
 
@@ -275,6 +293,16 @@ class ClassValue(val ast: AstClassDecl, val capturedScope: Scope, val capturedUs
 				throw Exception("can't call static getter on non-static, and vice-versa")
 
 			val funcScope = getMethodScope(obj, baseClass)
+
+			// Is it a native method?
+			if (setter.node.native) {
+				// See if we have it.
+				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get(name)
+						?: throw Exception("no implementation for native setter $namespace.${ast.name}.$name")
+
+				return nativeImpl.impl(runtime, name, objMap, funcScope, ListValue(mutableListOf(value)))
+			}
+
 			return Value.root(runtime, FuncValue(setter.func, funcScope).call(runtime, ListValue(mutableListOf(value))))
 		}
 

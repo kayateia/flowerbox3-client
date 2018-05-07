@@ -126,9 +126,10 @@ enum class AstAccessorType {
 interface AstClassBodyDecl {
 	val scope: AstScopeType
 	val static: Boolean
+	val native: Boolean
 }
 
-data class AstMethodDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val body: AstFuncDecl) : AstNode, AstClassBodyDecl
-data class AstFieldDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val decls: List<AstVarDecl>) : AstNode, AstClassBodyDecl
-data class AstAccessorDecl(override  val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val type: AstAccessorType, val name: String, val arg: String?, val body: List<AstStatement>) : AstNode, AstClassBodyDecl
+data class AstMethodDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, override val native: Boolean, val body: AstFuncDecl) : AstNode, AstClassBodyDecl
+data class AstFieldDecl(override val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, val decls: List<AstVarDecl>, override val native: Boolean = false) : AstNode, AstClassBodyDecl
+data class AstAccessorDecl(override  val loc: AstLoc, override val scope: AstScopeType, override val static: Boolean, override val native: Boolean, val type: AstAccessorType, val name: String, val arg: String?, val body: List<AstStatement>) : AstNode, AstClassBodyDecl
 

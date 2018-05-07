@@ -10,6 +10,8 @@ package net.kayateia.flowerbox.common.cherry.runtime
 import net.kayateia.flowerbox.common.cherry.parser.AstNode
 import net.kayateia.flowerbox.common.cherry.parser.AstProgram
 import net.kayateia.flowerbox.common.cherry.runtime.library.Library
+import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
+import net.kayateia.flowerbox.common.cherry.runtime.library.NativeLibrary
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
@@ -31,10 +33,22 @@ class Runtime(val program: AstProgram) {
 	var nsUsings: MutableList<String> = mutableListOf()
 
 	val library = Library()
+	val nativeLibrary = NativeLibrary()
 
 	init {
 		scopeStack.constScope.setLibrary(library)
-		scopeStack.constScope.setConstant("testfunc", IntrinsicValue({ runtime: Runtime, implicits: Scope, args: ListValue -> testFunc(implicits, args) }, null))
+		scopeStack.constScope.setConstant("testfunc", NativeValue(NativeImpl("", "", "", { _, _, _, implicits, args -> testFunc(implicits, args) }), MapScope()))
+		nativeLibrary.register(
+			NativeImpl("foo.bar.baz", "testbase", "testNative", { _, member, self, capturedScope, params -> testNative(member, self, capturedScope, params) })
+		)
+		nativeLibrary.register(
+			NativeImpl("foo.bar.baz", "testbase", "testNativeGet", { _, member, self, capturedScope, params -> testNative(member, self, capturedScope, params) })
+		)
+	}
+
+	fun testNative(member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue): Value {
+		println("testNative called - member=$member, self=$self, scope=$capturedScope, params=$params")
+		return Value.box("test")
 	}
 
 	fun testFunc(implicits: Scope, args: ListValue): Value {

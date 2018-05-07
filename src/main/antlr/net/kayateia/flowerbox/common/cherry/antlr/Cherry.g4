@@ -524,7 +524,7 @@ classBodyDeclaration
  ;
 
 methodDeclaration
- : scopeSpecifier ( Static )? functionDeclarationPostFunction
+ : scopeSpecifier ( Static )? ( Native )? functionDeclarationPostFunction
  ;
 
 fieldDeclaration
@@ -537,11 +537,11 @@ accessorDeclaration
  ;
 
 getAccessor
- : scopeSpecifier ( Static )? Get Identifier '(' ')' '{' functionBody '}'
+ : scopeSpecifier ( Static )? ( Native )? Get Identifier '(' ')' '{' functionBody '}'
  ;
 
 setAccessor
- : scopeSpecifier ( Static )? Set Identifier '(' Identifier ')' '{' functionBody '}'
+ : scopeSpecifier ( Static )? ( Native )? Set Identifier '(' Identifier ')' '{' functionBody '}'
  ;
 
 // Technically 'external' only applies to field declarations, but we can error this at a higher level.
@@ -790,6 +790,8 @@ keyword
  | Public
  | Protected
  | Static
+ | External
+ | Native
  ;
 
 futureReservedWord
@@ -951,6 +953,7 @@ Static     : 'static';
 Get        : 'get';
 Set        : 'set';
 External   : 'external';
+Native     : 'native';
 
 /// 7.6.1.2 Future Reserved Words
 //Enum    : 'enum';

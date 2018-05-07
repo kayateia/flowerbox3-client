@@ -180,7 +180,7 @@ fun FunctionDeclarationPostFunctionContext.toAst(p: Parser): AstFuncDecl {
 		(formalParameterList()?.toAst(p)) ?: listOf(),
 		AstBlock(AstLoc.from(p, this), listOf()))
 	p.functionPush(funcExpr)
-	funcExpr.body = AstBlock(funcExpr.body.loc, functionBody().sourceElements().toAst(p))
+	funcExpr.body = AstBlock(funcExpr.body.loc, functionBody()?.sourceElements()?.toAst(p) ?: listOf())
 	p.functionPop(funcExpr)
 	return AstFuncDecl(AstLoc.from(p, this), funcExpr)
 }
@@ -202,7 +202,7 @@ fun ClassBodyDeclarationContext.toAst(p: Parser): AstClassBodyDecl = when (this)
 }
 
 fun MethodDeclarationContext.toAst(p: Parser): AstMethodDecl =
-	AstMethodDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, functionDeclarationPostFunction().toAst(p))
+	AstMethodDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, Native() != null, functionDeclarationPostFunction().toAst(p))
 
 fun FieldDeclarationContext.toAst(p: Parser): AstFieldDecl =
 	AstFieldDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, variableDeclarationList().toAst(p))
@@ -214,7 +214,7 @@ fun AccessorDeclarationContext.toAst(p: Parser): AstAccessorDecl = when (this) {
 }
 
 fun GetAccessorContext.toAst(p: Parser): AstAccessorDecl =
-	AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, AstAccessorType.GET, Identifier().text, null, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())
+	AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, Native() != null, AstAccessorType.GET, Identifier().text, null, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())
 
 fun SetAccessorContext.toAst(p: Parser): AstAccessorDecl =
-		AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, AstAccessorType.SET, Identifier()[0].text, Identifier()[1].text, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())
+		AstAccessorDecl(AstLoc.from(p, this), AstScopeType.valueOf(scopeSpecifier().text.toUpperCase()), Static() != null, Native() != null, AstAccessorType.SET, Identifier()[0].text, Identifier()[1].text, (functionBody()?.sourceElements()?.sourceElement()?.map { it.toAst(p) }) ?: listOf())

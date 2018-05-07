@@ -9,6 +9,8 @@ package net.kayateia.flowerbox.common.cherry.parser
 
 import net.kayateia.flowerbox.common.cherry.antlr.*
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
+import net.kayateia.flowerbox.common.cherry.runtime.library.Debug
+import net.kayateia.flowerbox.common.cherry.runtime.library.Math
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.atn.ATNConfigSet
@@ -71,7 +73,7 @@ document.clear();
 for (i = 0; i <= 16; i++)
 	document.write(i + "! = " + factorial(i) + "<br />");
 		""") */
-			val ast = Parser().parse("<inline>", """
+			val ast = Parser().parse("<inline>", Debug.decls  + "\n" + Math.decls + """
 
 namespace foo.bar.baz;
 
@@ -80,6 +82,9 @@ namespace foo.bar.baz;
 class testbase {
 	public baseA = 15;
 	public static baseC = 12;
+
+	public native testNative(a, b) {}
+	public native get testNativeGet() {}
 
 	public init(a) {
 		sys.dbg.println("testbase constructor!", a, self);
@@ -142,6 +147,9 @@ sys.dbg.println("test.c is", test.c);
 testobj.randomMethod();
 test.randomStatic();
 test.basefooz = "set base fooz";
+
+testobj.testNative(1, 2, 3);
+sys.dbg.println("testNativeGet is", testobj.testNativeGet);
 
 var testdict = {
 	"foo": 5, "bar": 10, 15: "fooz", doIt: function() { sys.dbg.println("Inside doIt!", self); }

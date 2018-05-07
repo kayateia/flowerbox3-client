@@ -11,8 +11,16 @@ import net.kayateia.flowerbox.common.cherry.runtime.*
 
 object Debug {
 	val members = listOf(
-		IntrinsicImpl(listOf("sys", "dbg"), "println", { rt, i, p -> println(rt, p) })
+		NativeImpl("sys", "dbg", "println", { rt, _, _, _, p -> println(rt, p) })
 	)
+
+	val decls = """
+		namespace sys;
+
+		class dbg {
+			public static native println() {}
+		}
+	"""
 
 	private suspend fun println(runtime: Runtime, params: ListValue): Value {
 		println(params.listValue.map {
