@@ -7,6 +7,7 @@
 
 package net.kayateia.flowerbox.client
 
+import net.kayateia.flowerbox.common.cherry.objects.CherryPropertyBag
 import net.kayateia.flowerbox.common.cherry.parser.Parser
 import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
@@ -36,12 +37,17 @@ object Renderer {
 	private val lightingProgram = """
 		namespace fb.test;
 
-		class LightSource {
-			private i = 0;
-
+		class NativeVector {
+			public native get x() {}
 			public native set x(val) {}
+			public native get y() {}
 			public native set y(val) {}
+			public native get z() {}
 			public native set z(val) {}
+		}
+
+		class LightSource : NativeVector {
+			private i = 0;
 
 			public init() {
 				self.x = 50.0;
@@ -51,14 +57,13 @@ object Renderer {
 
 			public perFrame() {
 				self.i = (self.i + 1) % 360;
-				self.updatePos();
+
+				var rads = self.i * 3.1415 / 180.0;
+				self.updatePos(rads);
 			}
 
-			private updatePos() {
-				var rads = self.i * 3.1415 / 180.0;
-
+			private updatePos(rads) {
 				self.x = 50.0 * sys.math.cos(rads);
-				self.y = 30.0 + 10.0 * sys.math.sin(rads);
 				self.z = 50.0 * sys.math.sin(rads);
 			}
 		}
@@ -70,27 +75,18 @@ object Renderer {
 	private val parsedProgram = Parser().parse("<inline>", lightingProgram)
 	private val parsedPerFrame = Parser().parse("<inline>", perFrameProgram)
 	private var cherry: CherryRuntime = CherryRuntime()
-	private val lightPos: HashMap<String, Double> = HashMap()
+	private val lightPos = CherryPropertyBag(cherry, "fb.test", "NativeVector", listOf("x", "y", "z"))
 
 	init {
-		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "x", { rt, m, _, _, a -> programSetter(rt, m, a) }))
-		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "y", { rt, m, _, _, a -> programSetter(rt, m, a) }))
-		cherry.nativeLibrary.register(NativeImpl("fb.test", "LightSource", "z", { rt, m, _, _, a -> programSetter(rt, m, a) }))
 		cherry.execute(parsedProgram)
-	}
-
-	private suspend fun programSetter(rt: CherryRuntime, mem: String, args: ListValue): Value {
-		lightPos[mem] = Coercion.toNum(Value.prim(rt, args.listValue[0]))
-		return NullValue()
 	}
 
 	private fun lightingProgramPerFrame() {
 		cherry.execute(parsedPerFrame)
-		// println(lightPos)
 		glUniform3f(lightPositionLocation,
-			lightPos["x"]!!.toFloat(),
-			lightPos["y"]!!.toFloat(),
-			lightPos["z"]!!.toFloat())
+			Coercion.toNum(lightPos.bag["x"]).toFloat(),
+			Coercion.toNum(lightPos.bag["y"]).toFloat(),
+			Coercion.toNum(lightPos.bag["z"]).toFloat())
 	}
 
 	// Called once, in the render loop.

@@ -226,8 +226,8 @@ class ClassValue(val ast: AstClassDecl, val namespace: String, val capturedScope
 			// Is it a native method?
 			if (getter.node.native) {
 				// See if we have it.
-				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get(name)
-						?: throw Exception("no implementation for native getter $namespace.${ast.name}.$name")
+				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get("get::$name")
+						?: throw Exception("no implementation for native getter $namespace.${ast.name}.$name (get::$name)")
 
 				return nativeImpl.impl(runtime, name, objMap, funcScope, ListValue())
 			}
@@ -297,8 +297,8 @@ class ClassValue(val ast: AstClassDecl, val namespace: String, val capturedScope
 			// Is it a native method?
 			if (setter.node.native) {
 				// See if we have it.
-				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get(name)
-						?: throw Exception("no implementation for native setter $namespace.${ast.name}.$name")
+				val nativeImpl = runtime.nativeLibrary.namespaces[namespace]?.map?.get(ast.name)?.map?.get("set::$name")
+						?: throw Exception("no implementation for native setter $namespace.${ast.name}.$name (set::$name)")
 
 				return nativeImpl.impl(runtime, name, objMap, funcScope, ListValue(mutableListOf(value)))
 			}
