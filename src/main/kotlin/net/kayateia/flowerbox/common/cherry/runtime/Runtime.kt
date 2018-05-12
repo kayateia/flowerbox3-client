@@ -7,9 +7,9 @@
 
 package net.kayateia.flowerbox.common.cherry.runtime
 
-import net.kayateia.flowerbox.common.cherry.parser.AstNode
-import net.kayateia.flowerbox.common.cherry.parser.AstProgram
-import net.kayateia.flowerbox.common.cherry.parser.Parser
+import net.kayateia.flowerbox.common.cherry.objects.CherryNative
+import net.kayateia.flowerbox.common.cherry.objects.CherryNativeCompanion
+import net.kayateia.flowerbox.common.cherry.parser.*
 import net.kayateia.flowerbox.common.cherry.runtime.library.Debug
 import net.kayateia.flowerbox.common.cherry.runtime.library.Library
 import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
@@ -19,6 +19,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.reflect.full.companionObject
 
 class Runtime() {
 	val scopeStack = ScopeStack()
@@ -39,18 +40,10 @@ class Runtime() {
 
 	init {
 		scopeStack.constScope.setLibrary(library)
-		scopeStack.constScope.setConstant("testfunc", NativeValue(NativeImpl("", "", "", { _, _, _, implicits, args -> testFunc(implicits, args) }), MapScope()))
-		nativeLibrary.register(
-			NativeImpl("foo.bar.baz", "testbase", "testNative", { _, member, self, capturedScope, params -> testNative(member, self, capturedScope, params) })
-		)
-		nativeLibrary.register(
-			NativeImpl("foo.bar.baz", "testbase", "testNativeGet", { _, member, self, capturedScope, params -> testNative(member, self, capturedScope, params) })
-		)
-
 		nativeLibrary.executeAllDecls(this)
 	}
 
-	fun testNative(member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue): Value {
+	/* fun testNative(member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue): Value {
 		println("testNative called - member=$member, self=$self, scope=$capturedScope, params=$params")
 		return Value.box("test")
 	}
@@ -61,7 +54,7 @@ class Runtime() {
 		println(lexicalStack)
 		println(lexicalStack.stackTrace)
 		return ConstValue(5)
-	}
+	} */
 
 	override fun toString(): String {
 		exception?.printStackTrace()
@@ -70,13 +63,18 @@ class Runtime() {
 
 	// Returns true if we've fully completed execution.
 	fun execute(program: AstProgram, maxSteps: Int = -1): Boolean {
+		if (nextStep != null)
+			throw Exception("Attempt to start new execution before finishing previous one")
+
 		this.maxSteps = maxSteps
 		totalSteps = 0
 
-		val startFunc = suspend {
+		return beginExecute(suspend {
 			Step.toStep(program).execute(this, program)
-		}
+		})
+	}
 
+	private fun beginExecute(startFunc: suspend () -> Value): Boolean {
 		nextStep = startFunc.createCoroutine(object : Continuation<Any?> {
 			override val context: CoroutineContext
 				get() = EmptyCoroutineContext
@@ -93,6 +91,9 @@ class Runtime() {
 		})
 		nextStep!!.resume(Unit)
 
+		if (completed)
+			nextStep = null
+
 		return completed
 	}
 
@@ -104,7 +105,47 @@ class Runtime() {
 
 		nextStep!!.resume(Unit)
 
+		if (completed)
+			nextStep = null
+
 		return completed
+	}
+
+	// Executes a single object creation with optional limit on steps. Returns true if we've fully completed execution.
+	fun executeNew(className: String, args: List<Value> = listOf(), maxSteps: Int = -1): Boolean {
+		if (nextStep != null)
+			throw Exception("Attempt to start new execution before finishing previous one")
+
+		val classObj = library.lookup(className, listOf())
+		if (classObj == null || classObj !is ClassValue)
+			throw Exception("can't find class $className (result was $classObj)")
+
+		return beginExecute(suspend {
+			classObj.construct(this, ListValue(args.toMutableList()))
+		})
+	}
+
+	// Calls a method on an object. Returns true if we've fully completed execution.
+	fun executeMethod(obj: ObjectValue, methodName: String, args: List<Value>, maxSteps: Int = -1): Boolean {
+		if (nextStep != null)
+			throw Exception("Attempt to start new execution before finishing previous one")
+
+		return beginExecute(suspend {
+			val method = obj.`class`.get(this, obj, methodName)
+			if (method !is CValue)
+				throw Exception("${obj.`class`.ast.name}.$methodName is not callable")
+			method.call(this, ListValue(args.toMutableList()))
+		})
+	}
+
+	// Takes a native object (and its companion object) that implement the CherryNative interface,
+	// and returns a Cherry object wrapping it.
+	fun wrapNative(obj: CherryNative, companion: CherryNativeCompanion): Value {
+		val classObj = library.lookup(companion.className, listOf(companion.namespace))
+		if (classObj == null || classObj !is ClassValue)
+			throw Exception("can't find class ${companion.namespace}.${companion.className} (result was $classObj)")
+
+		return ObjectValue(classObj, nativeObject = obj)
 	}
 
 	fun scopePush(scope: Scope = MapScope(scopeStack.top)): ScopeStackToken = ScopeStackToken(this, scopeStack.push(scope))

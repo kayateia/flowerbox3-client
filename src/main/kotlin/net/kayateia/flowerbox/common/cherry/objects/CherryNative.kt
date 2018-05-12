@@ -7,45 +7,73 @@
 
 package net.kayateia.flowerbox.common.cherry.objects
 
-import net.kayateia.flowerbox.common.cherry.runtime.ListValue
-import net.kayateia.flowerbox.common.cherry.runtime.NullValue
-import net.kayateia.flowerbox.common.cherry.runtime.Runtime
-import net.kayateia.flowerbox.common.cherry.runtime.Value
+import net.kayateia.flowerbox.common.cherry.parser.AstProgram
+import net.kayateia.flowerbox.common.cherry.runtime.*
 import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
+import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 
 data class ExposedField(val name: String, val primify: Boolean, val getter: Boolean, val setter: Boolean)
 data class ExposedMethod(val name: String, val primify: Boolean)
 
-interface CherryNative {
+interface CherryNativeCompanion {
 	val exposedFields: List<ExposedField>
 		get() = listOf()
 	val exposedMethods: List<ExposedMethod>
 		get() = listOf()
 
-	fun getField(name: String): Any? = throw Exception("Getting field $name is not supported")
-	fun setField(name: String, value: Any?): Unit = throw Exception("Setting field $name is not supported")
+	val namespace: String
+	val className: String
 
-	fun callMethod(name: String, args: List<Any?>): Any? = throw Exception("Calling method $name is not supported")
-
-	fun setupCherry(runtime: Runtime, namespace: String, className: String) {
+	fun cherrySetup(runtime: Runtime) {
 		for (fn in exposedFields) {
+			// In this context, 'self' is always non-null.
 			if (fn.getter)
 				runtime.nativeLibrary.register(
-					NativeImpl(namespace, className, "get::${fn.name}", { rt, mem, self, scope, args -> getFieldTranslate(fn, rt) })
+					NativeImpl(namespace, className, "${ClassSpecialNames.GetterPrefix}${fn.name}", { rt, mem, self, scope, args -> getFieldTranslate(self!!, fn, rt) })
 				)
 
 			if (fn.setter)
 				runtime.nativeLibrary.register(
-					NativeImpl(namespace, className, "set::${fn.name}", { rt, mem, self, scope, args -> setFieldTranslate(fn, rt, args) })
+					NativeImpl(namespace, className, "${ClassSpecialNames.SetterPrefix}${fn.name}", { rt, mem, self, scope, args -> setFieldTranslate(self!!, fn, rt, args) })
 				)
 		}
 
 		for (m in exposedMethods) {
+			// Same as above, in this context, 'self' is always non-null.
 			runtime.nativeLibrary.register(
-				NativeImpl(namespace, className, m.name, { rt, mem, self, scope, args -> callMethodTranslate(m, rt, args) })
+				NativeImpl(namespace, className, m.name, { rt, mem, self, scope, args -> callMethodTranslate(self!!, m, rt, args) })
 			)
 		}
+
+		// Same as above, in this context, 'self' is always non-null.
+		runtime.nativeLibrary.register(
+			NativeImpl(namespace, className, ClassSpecialNames.NativeInitMethod, { rt, mem, self, scope, args -> constructCompanion(rt, mem, self!!, scope, args) })
+		)
 	}
+
+	suspend fun constructCompanion(runtime: Runtime, member: String, self: ObjectValue, scope: Scope, args: ListValue): Value
+
+	suspend fun getFieldTranslate(self: ObjectValue, field: ExposedField, runtime: Runtime): Value {
+		val nativeObject = self.nativeObject ?: throw Exception("Field ${field.name} was marked native but doesn't appear to have a native object.")
+		return nativeObject.getFieldTranslate(field, runtime)
+	}
+
+	suspend fun setFieldTranslate(self: ObjectValue, field: ExposedField, runtime: Runtime, args: ListValue): Value {
+		val nativeObject = self.nativeObject ?: throw Exception("Field ${field.name} was marked native but doesn't appear to have a native object.")
+		return nativeObject.setFieldTranslate(field, runtime, args)
+	}
+
+	suspend fun callMethodTranslate(self: ObjectValue, member: ExposedMethod, runtime: Runtime, args: ListValue): Value {
+		val nativeObject = self.nativeObject ?: throw Exception("Method ${member.name} was marked native but doesn't appear to have a native object.")
+		return nativeObject.callMethodTranslate(member, runtime, args)
+	}
+}
+
+interface CherryNative {
+	fun getField(name: String): Any? = throw Exception("Getting field $name is not supported")
+	fun setField(name: String, value: Any?): Unit = throw Exception("Setting field $name is not supported")
+
+	fun callMethod(name: String, args: List<Any?>): Any? = throw Exception("Calling method $name is not supported")
 
 	suspend fun getFieldTranslate(field: ExposedField, runtime: Runtime): Value {
 		// TODO - catch Kotlin exceptions and re-throw as Cherry

@@ -53,12 +53,8 @@ class FuncValue(val funcNode: AstFuncExpr, val capturedScope: Scope) : CValue {
 class NativeValue(val native: NativeImpl, val capturedScope: Scope) : CValue {
 	override suspend fun call(runtime: Runtime, args: ListValue): Value {
 		val self = capturedScope.get("self")
-		val selfMap = if (self is ObjectValue)
-				self.map
-			else
-				null
-
-		return native.impl(runtime, native.memberName, selfMap, capturedScope, args)
+		val selfObj = if (self is ObjectValue) self else null
+		return native.impl(runtime, native.memberName, selfObj, capturedScope, args)
 	}
 	override fun toString(): String = "Native(${native.namespace}.${native.className}.${native.memberName})"
 }

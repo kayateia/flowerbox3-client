@@ -10,7 +10,7 @@ import net.kayateia.flowerbox.common.cherry.runtime.step.Step
 object ClassDecl : Step {
 	override suspend fun execute(runtime: Runtime, node: AstNode): Value = when (node) {
 		is AstClassDecl -> {
-			val classValue = ClassValue(node, runtime.currentNamespace, runtime.scope, listOf(runtime.currentNamespace) + runtime.nsUsings.toList())
+			val classValue = ClassValue(node, runtime.currentNamespace, runtime.scope, listOf(runtime.currentNamespace) + runtime.nsUsings.toList(), false)
 			runtime.library.rootPackages.addOne(runtime.currentNamespace.split('.'), node.name, classValue)
 			classValue
 		}

@@ -7,16 +7,15 @@
 
 package net.kayateia.flowerbox.client
 
-import net.kayateia.flowerbox.common.cherry.objects.CherryPropertyBag
 import net.kayateia.flowerbox.common.cherry.parser.Parser
 import net.kayateia.flowerbox.common.cherry.runtime.*
-import net.kayateia.flowerbox.common.cherry.runtime.library.NativeImpl
+import net.kayateia.flowerbox.common.world.cherry.NativeVector
+import net.kayateia.flowerbox.common.world.cherry.WorldCherryLibrary
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.util.vector.*
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 
 typealias CherryRuntime = net.kayateia.flowerbox.common.cherry.runtime.Runtime
@@ -37,22 +36,15 @@ object Renderer {
 	private val lightingProgram = """
 		namespace fb.test;
 
-		class NativeVector {
-			public native get x() {}
-			public native set x(val) {}
-			public native get y() {}
-			public native set y(val) {}
-			public native get z() {}
-			public native set z(val) {}
-		}
-
-		class LightSource : NativeVector {
+		class LightSource {
 			private i = 0;
+			private pos;
 
-			public init() {
-				self.x = 50.0;
-				self.y = 30.0;
-				self.z = 0.0;
+			public init(pos) {
+				self.pos = pos;
+				self.pos.x = 50.0;
+				self.pos.y = 30.0;
+				self.pos.z = 0.0;
 			}
 
 			public perFrame() {
@@ -63,30 +55,33 @@ object Renderer {
 			}
 
 			private updatePos(rads) {
-				self.x = 50.0 * sys.math.cos(rads);
-				self.z = 50.0 * sys.math.sin(rads);
+				self.pos.x = 50.0 * sys.math.cos(rads);
+				self.pos.z = 50.0 * sys.math.sin(rads);
 			}
 		}
-
-		var light = new LightSource();
 	"""
-	private val perFrameProgram = "light.perFrame();"
 
 	private val parsedProgram = Parser().parse("<inline>", lightingProgram)
-	private val parsedPerFrame = Parser().parse("<inline>", perFrameProgram)
 	private var cherry: CherryRuntime = CherryRuntime()
-	private val lightPos = CherryPropertyBag(cherry, "fb.test", "NativeVector", listOf("x", "y", "z"))
+	private var lightSource: ObjectValue? = null
+	private var lightPos: Value? = null
+	private val lightPosNative = NativeVector()
 
 	init {
+		WorldCherryLibrary.registerAll(cherry)
 		cherry.execute(parsedProgram)
+		lightPos = cherry.wrapNative(lightPosNative, NativeVector.Companion)
+		cherry.executeNew("fb.test.LightSource", listOf(lightPos!!))
+		lightSource = cherry.result as ObjectValue
 	}
 
 	private fun lightingProgramPerFrame() {
-		cherry.execute(parsedPerFrame)
+		cherry.executeMethod(lightSource!!, "perFrame", listOf())
 		glUniform3f(lightPositionLocation,
-			Coercion.toNum(lightPos.bag["x"]).toFloat(),
-			Coercion.toNum(lightPos.bag["y"]).toFloat(),
-			Coercion.toNum(lightPos.bag["z"]).toFloat())
+			lightPosNative.x.toFloat(),
+			lightPosNative.y.toFloat(),
+			lightPosNative.z.toFloat()
+		)
 	}
 
 	// Called once, in the render loop.

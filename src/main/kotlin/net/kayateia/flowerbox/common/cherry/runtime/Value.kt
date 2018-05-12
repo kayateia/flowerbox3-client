@@ -61,19 +61,21 @@ interface RValue : Value {
 }
 
 // Represents a writable non-primitive value in the runtime.
+// This is allowed to return a Value for flow control results.
 interface LValue : Value {
-	suspend fun write(runtime: Runtime, value: Any?)
+	suspend fun write(runtime: Runtime, value: Any?): Value
 }
 
 // A reference to an item in a scope which may be read or written.
 class ScopeLValue(val scope: Scope, val name: String) : LValue, RValue {
 	override suspend fun read(runtime: Runtime): Any? = scope.get(name)
-	override suspend fun write(runtime: Runtime, value: Any?) {
+	override suspend fun write(runtime: Runtime, value: Any?): Value {
 		scope.set(name, when (value) {
 			is RValue -> value.read(runtime)
 			is Value -> value
 			else -> ConstValue(value)
 		})
+		return NullValue()
 	}
 
 	override fun toString(): String = "ScopeValue(${name})"
@@ -90,11 +92,13 @@ class NullValue : Value {
 
 class ListSetter(val array: ListValue, val key: Int) : RValue, LValue {
 	override suspend fun read(runtime: Runtime): Any? = array.listValue[key]
-	override suspend fun write(runtime: Runtime, value: Any?) {
+	override suspend fun write(runtime: Runtime, value: Any?): Value {
 		if (value is Value)
 			array.listValue[key] = value
 		else
 			array.listValue[key] = ConstValue(value)
+
+		return NullValue()
 	}
 }
 
@@ -113,12 +117,14 @@ class DictSetter(val dict: DictValue, val key: Any) : RValue, LValue {
 				readValue
 	}
 
-	override suspend fun write(runtime: Runtime, value: Any?) {
+	override suspend fun write(runtime: Runtime, value: Any?): Value {
 		dict.map[key] =
 			if (value is Value)
 				value
 			else
 				ConstValue(value)
+
+		return NullValue()
 	}
 }
 

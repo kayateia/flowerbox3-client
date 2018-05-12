@@ -9,6 +9,7 @@ package net.kayateia.flowerbox.common.cherry.runtime.library
 
 import net.kayateia.flowerbox.common.cherry.parser.AstProgram
 import net.kayateia.flowerbox.common.cherry.runtime.ListValue
+import net.kayateia.flowerbox.common.cherry.runtime.ObjectValue
 import net.kayateia.flowerbox.common.cherry.runtime.Runtime
 import net.kayateia.flowerbox.common.cherry.runtime.Value
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
@@ -19,7 +20,7 @@ interface NativeObjectImpl {
 }
 
 class NativeImpl(val namespace: String, val className: String, val memberName: String,
-	val impl: suspend (runtime: Runtime, member: String, self: HashMap<String, Value>?, capturedScope: Scope, params: ListValue) -> Value)
+	val impl: suspend (runtime: Runtime, member: String, self: ObjectValue?, capturedScope: Scope, params: ListValue) -> Value)
 
 class NativeClassMembers(val map: HashMap<String, NativeImpl> = HashMap())
 
