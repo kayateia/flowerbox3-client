@@ -13,7 +13,6 @@ import java.nio.ByteOrder
 
 import org.lwjgl.opengl.GL11.*
 import slim.texture.io.PNGDecoder
-import kotlin.coroutines.experimental.buildSequence
 
 
 class TextureCoord(val s: Float, val t: Float)
@@ -68,14 +67,14 @@ class TextureAtlas(val eachTxrSize: Int) {
 		val buffer = ByteBuffer.allocateDirect(bigTxrSize * bigTxrSize * 4)
 		buffer.order(ByteOrder.nativeOrder())
 
-		val poses = buildSequence {
+		val poses = sequence {
 			for (y in 0 until txrPerRow) {
 				for (x in 0 until txrPerRow) {
 					yield((x * eachTxrSize * 4) + (y * eachTxrSize * bigTxrSize * 4))
 				}
 			}
 		}.iterator()
-		coords = buildSequence {
+		coords = sequence {
 			for (y in 0 until txrPerRow) {
 				for (x in 0 until txrPerRow) {
 					yield(Texture2c(

@@ -17,9 +17,9 @@ import net.kayateia.flowerbox.common.cherry.runtime.library.NativeLibrary
 import net.kayateia.flowerbox.common.cherry.runtime.scope.MapScope
 import net.kayateia.flowerbox.common.cherry.runtime.scope.Scope
 import net.kayateia.flowerbox.common.cherry.runtime.step.Step
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
-import kotlin.reflect.full.companionObject
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.coroutines.resume
 
 class Runtime() {
 	val scopeStack = ScopeStack()
@@ -79,13 +79,8 @@ class Runtime() {
 			override val context: CoroutineContext
 				get() = EmptyCoroutineContext
 
-			override fun resume(value: Any?) {
+			override fun resumeWith(value: Result<Any?>) {
 				result = value
-				completed = true
-			}
-
-			override fun resumeWithException(exc: Throwable) {
-				exception = exc
 				completed = true
 			}
 		})
