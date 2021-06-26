@@ -6,7 +6,8 @@ textures that you currently have to supply for yourself. (see Textures.kt for a 
 You can obtain these textures from any of the zillions of Minecraft texture packs out there.
 (Eventually we'll distribute our own here, but for now, that's what you do.)
 
-This is licensed under the GPLv3 license. Please see LICENSE.txt for more details.
+This is licensed under the Apache 2.0 licence. Please see LICENSE.txt for more details,
+or visit this link: https://www.apache.org/licenses/LICENSE-2.0
 
 ## Building
 
